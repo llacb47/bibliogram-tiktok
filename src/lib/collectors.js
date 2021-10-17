@@ -370,6 +370,10 @@ function fetchTimelinePage(userID, after) {
 			}
 		}
 	}
+
+	//console.log("Getting next page of " + userID + " and cursor " + after)
+	//console.trace()
+	/** 
 	const p = new URLSearchParams()
 	p.set("query_hash", constants.external.timeline_query_hash)
 	p.set("variables", JSON.stringify({
@@ -388,7 +392,7 @@ function fetchTimelinePage(userID, after) {
 				requestCache
 				throw constants.symbols.NOT_FOUND // this should cascade down and show the user not found page
 			}
-			/** @type {import("./types").PagedEdges<import("./types").TimelineEntryN2>} */
+			/** @type {import("./types").PagedEdges<import("./types").TimelineEntryN2>} /*
 			const timeline = root.data.user.edge_owner_to_timeline_media
 			history.report("timeline", true)
 			return timeline
@@ -399,6 +403,34 @@ function fetchTimelinePage(userID, after) {
 			throw error
 		})
 	})
+	*/
+
+	let p = new URLSearchParams();
+	p.set('user_id', userID);
+	p.set('count', '12');
+	p.set('max_cursor', after);
+	p.set('min_cursor', '0');
+	p.set('retry_type', 'no_retry');
+	p.set('device_id', makeid(19, { 'numericalonly': 1 }))
+	addTikTokParams(p);
+
+	//try {
+	return requestCache.getOrFetchPromise(`page/${userID}/${after}`, () => {
+		return switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${p.toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
+
+		}).then(resp => resp.json()).then(root => {
+			const timeline = root.aweme_list
+			const cursor = root.max_cursor
+			history.report("timeline", true)
+			return [timeline, cursor]
+		}).catch(error => {
+			throw error
+		})
+	})
+	//}
+	//catch (e) {
+	//	console.log(e)
+	//}
 }
 
 /**

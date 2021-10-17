@@ -7,7 +7,7 @@ mixin next_page_button(user, selectedTimeline, url, type)
 			a(
 				href=`${nu.search}#page-${selectedTimeline.pages.length+1}`
 				data-page=(selectedTimeline.pages.length+1)
-				data-username=(user.data.username)
+				data-username=(user.data.user.unique_id)
 				data-type=type
 				data-loading-text=ll.next_page_button_loading
 			)#next-page.next-page= ll.next_page_button

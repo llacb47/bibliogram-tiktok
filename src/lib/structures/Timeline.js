@@ -44,7 +44,7 @@ class Timeline {
 			//	this.addPage(this.user.data.edge_owner_to_timeline_media)
 			//}
 			// @ts-ignore
-			this.addPage(this.user.aweme_data.aweme_list)
+			this.addPage(this.user.aweme_list)
 		} else if (this.type === "igtv") {
 			if (this.user.data.edge_felix_video_timeline) {
 				this.addPage(this.user.data.edge_felix_video_timeline)
@@ -65,10 +65,13 @@ class Timeline {
 				: this.type === "igtv" ? collectors.fetchIGTVPage
 					: null
 		// @ts-ignore
-		const after = this.page_info ? this.page_info.end_cursor : ""
-		return method(this.user.data.id, after).then(({ result: page, fromCache }) => {
+		//const after = this.page_info ? this.page_info.end_cursor : ""
+		const after = this.user.cursor
+		// @ts-ignore
+		return method(this.user.data.user.uid, after).then(({ result: coolArray, fromCache }) => {
+			this.user.newCursor = coolArray[1];
 			const quotaUsed = fromCache ? 0 : 1
-			this.addPage(page)
+			this.addPage(coolArray[0])
 			return { page: this.pages.slice(-1)[0], quotaUsed }
 		})
 	}

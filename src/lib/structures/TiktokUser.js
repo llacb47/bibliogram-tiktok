@@ -10,7 +10,8 @@ class TiktokUser extends BaseUser {
     constructor(data, aweme_data) {
         super()
         this.data = data
-        this.aweme_data = aweme_data
+        this.aweme_list = aweme_data.aweme_list
+        this.cursor = aweme_data.max_cursor
         this.following = data.user.following_count
         this.followedBy = data.user.follower_count
         this.posts = data.user.aweme_count
@@ -22,6 +23,14 @@ class TiktokUser extends BaseUser {
         // profile pics
 
 
+    }
+
+    // more elegant to use more getters and setters??
+
+    set newCursor(val) {
+        //console.trace()
+        console.log("updating cursor to " + val)
+        this.cursor = val;
     }
 }
 
