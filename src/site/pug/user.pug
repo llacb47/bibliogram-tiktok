@@ -9,7 +9,7 @@ include includes/feed_link
 - const numberFormat = new Intl.NumberFormat().format
 
 mixin selector-button(text, selectorType, urlSuffix)
-	a(href=(type !== selectorType && `/u/${user.data.username}${urlSuffix}`) class=(type === selectorType && "active")).selector= text
+	a(href=(type !== selectorType && `/u/${user.data.user.unique_id}${urlSuffix}`) class=(type === selectorType && "active")).selector= text
 
 mixin verified-badge(classes)
 	img.verified-badge(class=classes src=getStaticURL("html", "/static/img/verified.svg") width=19 height=19 alt=ll.verified_badge_alt title=ll.verified_badge_title)
@@ -17,20 +17,20 @@ mixin verified-badge(classes)
 doctype html
 html
 	head
-		if user.data.full_name
-			title= `${user.data.full_name} (@${user.data.username}) | Bibliogram`
+		if user.data.user.nickname
+			title= `${user.data.user.nickname} (@${user.data.user.unique_id}) | Bibliogram`
 		else
-			title= `@${user.data.username} | Bibliogram`
+			title= `@${user.data.user.unique_id} | Bibliogram`
 		include includes/head
 		if settings.spa
 			script(src=getStaticURL("html", "/static/js/post_overlay.js") type="module")
 		else
 			script(src=getStaticURL("html", "/static/js/pagination.js") type="module")
-		meta(property="og:url" content=`${constants.website_origin}/u/${user.data.username}`)
+		meta(property="og:url" content=`${constants.website_origin}/u/${user.data.user.unique_id}`)
 		meta(property="og:type" content="profile")
-		meta(property="og:title" content=(user.data.full_name || user.data.username))
-		if user.data.biography
-			meta(property="og:description" content=user.data.biography)
+		meta(property="og:title" content=(user.data.user.nickname || user.data.user.unique_id))
+		if user.data.user.signature
+			meta(property="og:description" content=user.data.user.signature)
 		meta(property="og:image" content=`${constants.website_origin}${user.proxyProfilePicture}`)
 		meta(property="og:image:width" content=150)
 		meta(property="og:image:height" content=150)
@@ -48,20 +48,20 @@ html
 			header.profile-overview
 				.profile-sticky
 					section
-						img(src=user.proxyProfilePicture width=150 height=150 alt=`${user.data.full_name || user.data.username}'s profile picture.`).pfp
+						img(src=user.proxyProfilePicture width=150 height=150 alt=`${user.data.user.nickname || user.data.user.unique_id}'s profile picture.`).pfp
 						//-
 							Instagram only uses the above URL, but an HD version is also available.
 							The alt text is pathetic, I know. I don't have much to work with.
-						if user.data.full_name
-							h1.full-name= user.data.full_name
+						if user.data.user.nickname
+							h1.full-name= user.data.user.nickname
 							h2.username
-								= `@${user.data.username}`
+								= `@${user.data.user.unique_id}`
 								if user.data.is_verified
 									+verified-badge("as-username")
 						else
 							h1.full-name
-								= `@${user.data.username}`
-								if user.data.is_verified
+								= `@${user.data.user.unique_id}`
+								if (user.data.user.enterprise_verify_reason != "" || user.data.user.verification_type == "1")
 									+verified-badge("as-fullname")
 						p.structured-text.bio
 							- const bio = user.getStructuredBio()
@@ -73,24 +73,23 @@ html
 								a(href=userURL)= userURL
 						if selectedTimeline.entryCount != undefined
 							div.profile-counter
-								| #[span(data-numberformat=selectedTimeline.entryCount).count #{numberFormat(selectedTimeline.entryCount)} ]
+								| #[span(data-numberformat=user.posts).count #{numberFormat(user.posts)} ]
 								= ll.post_counter_label
-						if followerCountsAvailable
-							if user.following != undefined
-								div.profile-counter
-									= ll.outgoing_follows_counter_label
-									span(data-numberformat=user.following).count  #{numberFormat(user.following)}
-							if user.followedBy != undefined
-								div.profile-counter
-									= ll.incoming_follows_counter_label
-									span(data-numberformat=user.followedBy).count  #{numberFormat(user.followedBy)}
+						if user.following != undefined
+							div.profile-counter
+								= ll.outgoing_follows_counter_label
+								span(data-numberformat=user.following).count  #{numberFormat(user.following)}
+						if user.followedBy != undefined
+							div.profile-counter
+								= ll.incoming_follows_counter_label
+								span(data-numberformat=user.followedBy).count  #{numberFormat(user.followedBy)}
 						else
 							div.profile-counter.not-available Followers not available.
 						.links
 							if constants.feeds.enabled && constants.feeds.display_links
-								+feed_link("RSS", "rss", user.data.username, "application/rss+xml", constants.feeds.display_validation_links)
-								+feed_link("Atom", "atom", user.data.username, "application/atom+xml", constants.feeds.display_validation_links)
-							a(rel="noreferrer noopener" href=`https://www.instagram.com/${user.data.username}` target="_blank") instagram.com
+								+feed_link("RSS", "rss", user.data.user.unique_id, "application/rss+xml", constants.feeds.display_validation_links)
+								+feed_link("Atom", "atom", user.data.user.unique_id, "application/atom+xml", constants.feeds.display_validation_links)
+							a(rel="noreferrer noopener" href=`https://www.instagram.com/${user.data.user.unique_id}` target="_blank") instagram.com
 					section.bibliogram-meta
 						.links
 							a(href="/")= ll.t_home
@@ -100,12 +99,12 @@ html
 								= ll.quota_left
 								|  #[span#quota= remaining]
 
-			- const hasPosts = !user.data.is_private && selectedTimeline.pages.length && selectedTimeline.pages[0].length
+			- const hasPosts = !user.data.user.secret && selectedTimeline.pages.length && selectedTimeline.pages[0].length
 			.timeline-section(dir=ll.meta_direction)
 				.selector-container
 					+selector-button(ll.tab_timeline, "timeline", "")
-					if user.data.has_channel !== false || user.data.edge_felix_video_timeline.count !== 0
-						+selector-button(ll.tab_igtv, "igtv", "/channel")
+					//if user.data.has_channel !== false || user.data.edge_felix_video_timeline.count !== 0
+					//	+selector-button(ll.tab_igtv, "igtv", "/channel")
 
 				main(class=hasPosts ? "" : "no-posts")#timeline.timeline
 					if hasPosts
@@ -116,7 +115,7 @@ html
 						div
 							div.page-number
 								span.number
-									if user.data.is_private
+									if user.data.user.secret
 										= ll.profile_is_private_notice
 									else
 										= ll.no_posts_notice

@@ -1,6 +1,6 @@
 const constants = require("../constants")
-const {proxyProfilePic} = require("../utils/proxyurl")
-const {structure} = require("../utils/structuretext")
+const { proxyProfilePic } = require("../utils/proxyurl")
+const { structure } = require("../utils/structuretext")
 
 const rewriters = {
 	rewrite_youtube: ["youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"],
@@ -44,7 +44,8 @@ class BaseUser {
 	}
 
 	computeProxyProfilePic() {
-		this.proxyProfilePicture = proxyProfilePic(this.data.profile_pic_url, this.data.id)
+		//this.proxyProfilePicture = proxyProfilePic(this.data.profile_pic_url, this.data.id)
+		this.proxyProfilePicture = proxyProfilePic(this.data.user.avatar_uri, this.data.user.uid)
 	}
 
 	getStructuredBio() {
@@ -63,4 +64,8 @@ class BaseUser {
 	}
 }
 
-module.exports = BaseUser
+class TiktokBaseUser {
+
+}
+
+module.exports = BaseUser;

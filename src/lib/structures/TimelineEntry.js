@@ -1,8 +1,8 @@
 const constants = require("../constants")
-const {proxyImage, proxyExtendedOwner} = require("../utils/proxyurl")
-const {compile} = require("pug")
+const { proxyImage, proxyExtendedOwner } = require("../utils/proxyurl")
+const { compile } = require("pug")
 const collectors = require("../collectors")
-const {structure, removeTrailingHashtags} = require("../utils/structuretext")
+const { structure, removeTrailingHashtags } = require("../utils/structuretext")
 const TimelineBaseMethods = require("./TimelineBaseMethods")
 const TimelineChild = require("./TimelineChild")
 require("../testimports")(collectors, TimelineChild, TimelineBaseMethods)
@@ -88,7 +88,7 @@ class TimelineEntry extends TimelineBaseMethods {
 	 * All mutations should act exactly once and have no effect on already mutated data.
 	 */
 	fixData() {
-		this.date = new Date(this.data.taken_at_timestamp*1000)
+		this.date = new Date(this.data.taken_at_timestamp * 1000)
 	}
 
 	getDisplayDate() {
@@ -97,7 +97,7 @@ class TimelineEntry extends TimelineBaseMethods {
 		}
 		return (
 			`${this.date.getUTCFullYear()}`
-			+ `-${pad(this.date.getUTCMonth()+1)}`
+			+ `-${pad(this.date.getUTCMonth() + 1)}`
 			+ `-${pad(this.date.getUTCDate())}`
 			+ ` ${pad(this.date.getUTCHours())}`
 			+ `:${pad(this.date.getUTCMinutes())}`
@@ -106,9 +106,11 @@ class TimelineEntry extends TimelineBaseMethods {
 	}
 
 	getCaption() {
-		const edge = this.data.edge_media_to_caption.edges[0]
-		if (!edge) return null // no caption
-		else return edge.node.text.replace(/\u2063/g, "") // I don't know why U+2063 INVISIBLE SEPARATOR is in here, but it is, and it causes rendering issues with certain fonts, so let's just remove it.
+		//const edge = this.data.edge_media_to_caption.edges[0]
+		//if (!edge) return null // no caption
+		//else return edge.node.text.replace(/\u2063/g, "") // I don't know why U+2063 INVISIBLE SEPARATOR is in here, but it is, and it causes rendering issues with certain fonts, so let's just remove it.
+		return this.data.desc
+		//console.log(this)
 	}
 
 	getStructuredCaption() {
@@ -144,7 +146,7 @@ class TimelineEntry extends TimelineBaseMethods {
 	 * @returns {import("../types").BasicOwner}
 	 */
 	getBasicOwner() {
-		return this.data.owner
+		return this.data.author
 	}
 
 	/**
@@ -170,6 +172,8 @@ class TimelineEntry extends TimelineBaseMethods {
 	 * @return {import("../types").DisplayResource}
 	 */
 	getSuggestedThumbnailP(size) {
+		// this.data.video.cover.url_list[0]
+		/*
 		if (this.data.thumbnail_resources) {
 			let found = null // start with nothing
 			for (const tr of this.data.thumbnail_resources) { // and keep looping up the sizes (sizes come sorted)
@@ -193,6 +197,17 @@ class TimelineEntry extends TimelineBaseMethods {
 			}
 		} else {
 			return null
+		}
+		*/
+		//let src = this.data.video.cover.url_list[0]
+		let key = this.data.video.animated_cover.uri
+		if (constants.proxy_media.thumbnail) {
+			var src = proxyImage(key, this.data.video.cover.width)
+		}// force resize to config rather than requested
+		return {
+			config_width: this.data.video.cover.width,
+			config_height: this.data.video.cover.width,
+			src
 		}
 	}
 
@@ -226,7 +241,7 @@ class TimelineEntry extends TimelineBaseMethods {
 			// Create children
 			this.children = this.data.edge_sidecar_to_children.edges.map(e => new TimelineChild(e.node))
 		})()
-		return {fromCache, children: this.children}
+		return { fromCache, children: this.children }
 	}
 
 	/**
@@ -237,56 +252,61 @@ class TimelineEntry extends TimelineBaseMethods {
 		let fromCache = true
 		const clone = await (async () => {
 			// Do we just already have the extended owner?
-			if (this.data.owner.full_name) { // this property is on extended owner and not basic owner
-				const clone = proxyExtendedOwner(this.data.owner)
+			console.log(this.data)
+			if (this.data.author) { // this property is on extended owner and not basic owner
+				const clone = proxyExtendedOwner(this.data.author)
 				this.ownerPfpCacheP = clone.profile_pic_url
 				return clone
 			}
 			// The owner may be in the user cache, so copy from that.
-			else if (collectors.userRequestCache.getByID(this.data.owner.id)) {
-				/** @type {import("./User")} */
-				const user = collectors.userRequestCache.getByID(this.data.owner.id)
-				if (user.data.full_name !== undefined) {
-					this.data.owner = {
-						id: user.data.id,
-						username: user.data.username,
-						is_verified: user.data.is_verified,
-						full_name: user.data.full_name,
-						profile_pic_url: user.data.profile_pic_url // _hd is also available here.
-					}
-					const clone = proxyExtendedOwner(this.data.owner)
-					this.ownerPfpCacheP = clone.profile_pic_url
-					return clone
-				}
-				// That didn't work, so just fall through...
-			}
-			// We'll have to re-request ourselves.
-			fromCache = false
-			await this.update()
-			const clone = proxyExtendedOwner(this.data.owner)
-			this.ownerPfpCacheP = clone.profile_pic_url
-			return clone
+			/******** 
+
+else if (collectors.userRequestCache.getByID(this.data.owner.id)) {
+	/** @type {import("./User")} *//*
+							const user = collectors.userRequestCache.getByID(this.data.owner.id)
+							if (user.data.full_name !== undefined) {
+								this.data.owner = {
+									id: user.data.id,
+									username: user.data.username,
+									is_verified: user.data.is_verified,
+									full_name: user.data.full_name,
+									profile_pic_url: user.data.profile_pic_url // _hd is also available here.
+								}
+								const clone = proxyExtendedOwner(this.data.owner)
+								this.ownerPfpCacheP = clone.profile_pic_url
+								return clone
+							}
+							// That didn't work, so just fall through...
+						}
+						/**
+						// We'll have to re-request ourselves.
+						fromCache = false
+						await this.update()
+						const clone = proxyExtendedOwner(this.data.owner)
+						this.ownerPfpCacheP = clone.profile_pic_url
+						return clone
+						*/
 		})()
-		return {owner: clone, fromCache}
+		return { owner: clone, fromCache }
 	}
 
 	fetchVideoURL() {
-		if (!this.isVideo()) {
-			return Promise.resolve({fromCache: true, videoURL: null})
-		} else if (this.data.video_url) {
-			return Promise.resolve({fromCache: true, videoURL: this.getVideoUrlP()})
-		} else {
-			return this.update().then(() => {
-				return {fromCache: false, videoURL: this.getVideoUrlP()}
-			})
-		}
+		//if (!this.isVideo()) {
+		//	return Promise.resolve({ fromCache: true, videoURL: null })
+		//} else if (this.data.video_url) {
+		return Promise.resolve({ fromCache: true, videoURL: this.getVideoUrlP() })
+		//}// else {
+		//	return this.update().then(() => {
+		//		return { fromCache: false, videoURL: this.getVideoUrlP() }
+		//	})
+		//}
 	}
 
 	/**
 	 * @returns {Promise<import("feed/src/typings/index").Item>}
 	 */
 	async fetchFeedData() {
-		const {children} = await this.fetchChildren()
+		const { children } = await this.fetchChildren()
 		return {
 			title: this.getCaptionIntroduction() || `New post from @${this.getBasicOwner().username}`,
 			description: rssDescriptionTemplate({
@@ -295,8 +315,8 @@ class TimelineEntry extends TimelineBaseMethods {
 			}),
 			link: `${constants.website_origin}/p/${this.data.shortcode}`,
 			id: `bibliogram:post/${this.data.shortcode}`, // Is it wise to keep the origin in here? The same post would have a different ID from different servers.
-			published: new Date(this.data.taken_at_timestamp*1000), // first published date
-			date: new Date(this.data.taken_at_timestamp*1000) // last modified date
+			published: new Date(this.data.taken_at_timestamp * 1000), // first published date
+			date: new Date(this.data.taken_at_timestamp * 1000) // last modified date
 			/*
 				Readers should display the description as HTML rather than using the media enclosure.
 				enclosure: {

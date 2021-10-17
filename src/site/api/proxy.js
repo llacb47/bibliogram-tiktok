@@ -1,8 +1,8 @@
 const gm = require("gm")
 const constants = require("../../lib/constants")
 const collectors = require("../../lib/collectors")
-const {request} = require("../../lib/utils/request")
-const {verifyURL} = require("../../lib/utils/proxyurl")
+const { request } = require("../../lib/utils/request")
+const { verifyURL, rewriteURLImageProxy } = require("../../lib/utils/proxyurl")
 const db = require("../../lib/db")
 require("../../lib/testimports")(constants, request, db, verifyURL)
 
@@ -20,14 +20,18 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	for (const key of ["accept", "accept-encoding", "accept-language", "range"]) {
 		if (suggestedHeaders[key]) headersToSend[key] = suggestedHeaders[key]
 	}
-	const sent = request(url, {headers: headersToSend}, {log: false})
+	const sent = request(url, { headers: headersToSend }, { log: false })
 	const stream = await sent.stream()
 	const response = await sent.response()
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
 		const headersToReturn = {}
-		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
+		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag",/* "content-length",*/ "transfer-encoding"]) {
 			headersToReturn[key] = response.headers.get(key)
+		}
+		// shitty fix for webp plain text
+		if (headersToReturn["content-type"] == "text/plain; charset=utf-8") {
+			headersToReturn["content-type"] = "image/webp"
 		}
 		return {
 			statusCode: response.status,
@@ -50,9 +54,10 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 module.exports = [
 	{
 		route: "/imageproxy", methods: ["GET"], code: async (input) => {
-			const verifyResult = verifyURL(input.url)
-			if (verifyResult.status !== "ok") return verifyResult.value
-			if (!["png", "jpg"].some(ext => verifyResult.url.pathname.endsWith(ext))) return [400, "URL extension is not allowed"]
+			//const verifyResult = verifyURL(input.url)
+			const rewriteResult = rewriteURLImageProxy(input.url)
+			//if (verifyResult.status !== "ok") return verifyResult.value
+			//if (!["png", "jpg"].some(ext => verifyResult.url.pathname.endsWith(ext))) return [400, "URL extension is not allowed"]
 			const params = input.url.searchParams
 			const width = +params.get("width")
 			if (typeof width === "number" && !isNaN(width) && width > 0) {
@@ -63,30 +68,39 @@ module.exports = [
 				  images client side, it would have to be done with CSS
 				  background-image, which means no <img srcset>.
 				*/
-				return request(verifyResult.url, {}, {log: false}).stream().then(body => {
-					const image = gm(body).gravity("Center").crop(width, width, 0, 0).repage("+")
+
+				/*
+				return request(rewriteResult.url, {}, { log: false }).stream().then(body => {
+					//const image = gm(body).gravity("Center").crop(width, width, 0, 0).repage("+")
+					const image = gm(body)
 					const stream = image.stream("jpg")
 					return {
 						statusCode: 200,
-						contentType: "image/jpeg",
+						//contentType: "image/jpeg",
+						// thumbs are webp or awebp
+						contentType: "image/webp",
 						headers: {
 							"Cache-Control": constants.caching.image_cache_control
 						},
 						stream
 					}
-				})
+					
+				})*/
+				return proxyResource(rewriteResult.url.toString(), input.req.headers)
 			} else {
 				// No specific size was requested, so just stream proxy the file directly.
-				if (params.has("userID")) {
+				//if (params.has("userID")) {
+				if (false) {
 					/*
 					  Users get special handling, because we need to update
 					  their profile picture if an expired version is cached
 					*/
-					return proxyResource(verifyResult.url.toString(), input.req.headers, () => {
+					return proxyResource(rewriteResult.url.toString(), input.req.headers, () => {
 						// If we get here, we got HTTP 410 GONE.
 						const userID = params.get("userID")
+						// TODO: fix this - proper caching using db
 						const storedProfilePicURL = db.prepare("SELECT profile_pic_url FROM Users WHERE user_id = ?").pluck().get(userID)
-						if (storedProfilePicURL === verifyResult.url.toString()) {
+						if (storedProfilePicURL === rewriteResult.url.toString()) {
 							// Everything looks fine, find out what the new URL for the provided user ID is and store it.
 							return collectors.updateProfilePictureFromReel(userID).then(url => {
 								// Updated. Return the new picture (without recursing)
@@ -113,7 +127,7 @@ module.exports = [
 						}
 					})
 				} else {
-					return proxyResource(verifyResult.url.toString(), input.req.headers)
+					return proxyResource(rewriteResult.url.toString(), input.req.headers)
 				}
 			}
 		}

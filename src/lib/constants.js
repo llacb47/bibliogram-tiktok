@@ -26,8 +26,9 @@ let constants = {
 
 	// Things that server owners _could_ change if they want to.
 	tor: {
-		enabled: true, // If false, everything else in this block has no effect.
+		enabled: false, // If false, everything else in this block has no effect.
 		password: null, // If `null`, Bibliogram will run its own Tor process instead.
+		port: 9051, // If a password is provided, Bibliogram will connect to Tor on this port. (This is ignored when running its own Tor process.)
 		for: {
 			user_html: true,
 			timeline_graphql: false,
@@ -35,7 +36,7 @@ let constants = {
 			reel_graphql: false
 		}
 	},
-	request_backend: "node-fetch", // one of: "node-fetch", "got"
+	request_backend: "got", // one of: "node-fetch", "got"
 	// After setting your privacy policy, I suggest you read src/site/html/.well-known/dnt-policy.txt. If you comply with it,
 	// change this to `true` to serve it, which will make extensions like Privacy Badger automatically whitelist the domain.
 	does_not_track: false,
@@ -73,7 +74,7 @@ let constants = {
 			// The link address.
 			link: "https://your.domain/feedannouncement"
 		},
-		feed_disabled_max_age: 2*24*60*60 // 2 days
+		feed_disabled_max_age: 2 * 24 * 60 * 60 // 2 days
 	},
 
 	// Themes. `file` is the filename without extension. `name` is the display name on the settings page.
@@ -82,12 +83,12 @@ let constants = {
 		// If you want to disable some official themes, then create an entry that replaces this array in config.js.
 		// Format: `{file: string, name: string}[]`
 		official: [
-			{file: "classic", name: "Vanilla sard"},
-			{file: "blue", name: "Vanilla sky"},
-			{file: "discord", name: "Discord dark"},
-			{file: "pitchblack", name: "Pitch black"},
-			{file: "pussthecat.org", name: "PussTheCat.org dark v1"},
-			{file: "pussthecat.org-v2", name: "PussTheCat.org dark v2"},
+			{ file: "classic", name: "Vanilla sard" },
+			{ file: "blue", name: "Vanilla sky" },
+			{ file: "discord", name: "Discord dark" },
+			{ file: "pitchblack", name: "Pitch black" },
+			{ file: "pussthecat.org", name: "PussTheCat.org dark v1" },
+			{ file: "pussthecat.org-v2", name: "PussTheCat.org dark v2" },
 		],
 		// To add your own theme, create an entry that replaces this array in config.js, then add your theme to it.
 		// Format: `{file: string, name: string}[]`
@@ -119,7 +120,7 @@ let constants = {
 
 	quota: {
 		enabled: false,
-		timeframe: 20*60*60*1000,
+		timeframe: 20 * 60 * 60 * 1000,
 		count: 50,
 		ip_mode: "header", // one of: "header", "address"
 		ip_header: "x-forwarded-for",
@@ -132,62 +133,62 @@ let constants = {
 			default: "en",
 			boolean: false,
 			replaceEmptyWithDefault: true // set this to false if the control is a checkbox and is not disabled
-		},{
+		}, {
 			name: "show_comments",
 			default: "",
 			boolean: true,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "remove_trailing_hashtags",
 			default: "",
 			boolean: true,
 			replaceEmptyWithDefault: false
-		},{
+		}, {
 			name: "link_hashtags",
 			default: "",
 			boolean: true,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "spa",
 			default: "on",
 			boolean: true,
 			replaceEmptyWithDefault: false
-		},{
+		}, {
 			name: "infinite_scroll",
 			default: "normal",
 			boolean: false,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "caption_side",
 			default: "left",
 			boolean: false,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "display_alt",
 			default: "",
 			boolean: true,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "timeline_columns",
 			default: "dynamic",
 			boolean: false,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "display_top_nav",
 			default: "",
 			boolean: true,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "save_data",
 			default: "automatic",
 			boolean: false,
 			replaceEmptyWithDefault: true
-		},{
+		}, {
 			name: "rewrite_youtube",
 			default: "",
 			boolean: false,
 			replaceEmptyWithDefault: false
-		},{
+		}, {
 			name: "rewrite_twitter",
 			default: "",
 			boolean: false,
@@ -202,7 +203,7 @@ let constants = {
 		enabled: false,
 		assistants: [
 		],
-		offline_request_cooldown: 20*60*1000,
+		offline_request_cooldown: 20 * 60 * 1000,
 		blocked_request_cooldown: 0
 	},
 
@@ -215,19 +216,19 @@ let constants = {
 	},
 
 	caching: {
-		image_cache_control: `public, max-age=${7*24*60*60}`,
-		resource_cache_time: 30*60*1000,
-		instance_list_cache_time: 3*60*1000,
-		cache_sweep_interval: 3*60*1000,
-		csrf_time: 60*60*1000,
+		image_cache_control: `public, max-age=${7 * 24 * 60 * 60}`,
+		resource_cache_time: 30 * 60 * 1000,
+		instance_list_cache_time: 3 * 60 * 1000,
+		cache_sweep_interval: 3 * 60 * 1000,
+		csrf_time: 60 * 60 * 1000,
 		self_blocked_status: {
 			user_html: {
 				enabled: false,
-				time: 15*60*1000
+				time: 15 * 60 * 1000
 			},
 			timeline_graphql: {
 				enabled: false,
-				time: 24*60*60*1000
+				time: 24 * 60 * 60 * 1000
 			}
 		},
 		db_user_id: true,
@@ -255,6 +256,17 @@ let constants = {
 			// Not found, but likely reserved
 			"graphql", "accounts", "p", "help", "terms", "contact", "blog", "igtv"
 		]
+		//////
+	},
+
+	tiktok: {
+		_APP_VERSION: '20.9.3',
+		_MANIFEST_APP_VERSION: '291',
+		_API_PREFIX: 'https://api-t2.tiktokv.com/aweme/',
+		_API_PREFIX_ALT: 'https://api.tiktokv.com/aweme/',
+		deviceParams: [],
+		secretpath1: '',
+		secretpath2: ''
 	},
 
 	resources: {

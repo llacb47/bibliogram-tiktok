@@ -20,4 +20,5 @@ class User extends BaseUser {
 	}
 }
 
+
 module.exports = User

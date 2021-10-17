@@ -1,7 +1,7 @@
 const constants = require("../constants")
 const collectors = require("../collectors")
 const TimelineBaseMethods = require("./TimelineBaseMethods")
-const {compile} = require("pug")
+const { compile } = require("pug")
 require("../testimports")(collectors)
 
 const rssImageTemplate = compile(`
@@ -22,9 +22,9 @@ class TimelineChild extends TimelineBaseMethods {
 
 	getFeedItem() {
 		if (this.data.video_url) {
-			return rssVideoTemplate({entry: this, constants})
+			return rssVideoTemplate({ entry: this, constants })
 		} else {
-			return rssImageTemplate({entry: this, constants})
+			return rssImageTemplate({ entry: this, constants })
 		}
 	}
 }

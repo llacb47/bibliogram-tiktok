@@ -21,7 +21,9 @@
     "feed": "git+https://git.sr.ht/~cadence/nodejs-feed#3dde82f8296d7a6f5659323e497e0c684f03ab71",
     "get-stream": "^6.0.1",
     "gm": "^1.23.1",
+    "hpagent": "^0.1.2",
     "is-in-subnet": "^4.0.1",
+    "jsdom": "^17.0.0",
     "mixin-deep": "^2.0.1",
     "node-dir": "^0.1.17",
     "node-fetch": "^2.6.1",
@@ -32,7 +34,7 @@
   },
   "optionalDependencies": {
     "@deadcanaries/granax": "^3.2.5",
-    "got": "^10.6.0"
+    "got": "^10.7.0"
   },
   "devDependencies": {
     "jimp": "^0.16.1",

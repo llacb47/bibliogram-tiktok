@@ -12,11 +12,11 @@ mixin post(post, headerWithNavigation)
 			.user-header
 				header.user-header-inner
 					img(src=post.ownerPfpCacheP width=150 height=150 alt="").pfp
-					a.name(href=`/u/${post.getBasicOwner().username}`)
-						if post.data.owner.full_name
-							= `${post.data.owner.full_name} (@${post.getBasicOwner().username})`
-						else
-							= `@${post.getBasicOwner().username}`
+					a.name(href=`/u/${post.getBasicOwner().unique_id}`)
+						//if true
+						= `${post.data.author.nickname} (@${post.getBasicOwner().unique_id})`
+						//else
+						//	= `@${post.getBasicOwner().unique_id}`
 				if headerWithNavigation
 					button(data-previous).navigate-posts
 						img(src=getStaticURL("html", "/static/img/arrow-circled.svg") alt="Previous post.").icon.previous

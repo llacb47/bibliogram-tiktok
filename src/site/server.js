@@ -1,5 +1,5 @@
-const {Pinski} = require("pinski")
-const {subdirs} = require("node-dir")
+const { Pinski } = require("pinski")
+const { subdirs } = require("node-dir")
 const constants = require("../lib/constants")
 const lang = require("../lang")
 
@@ -9,6 +9,9 @@ const deniedFeatures = [
 	"accelerometer", "ambient-light-sensor", "battery", "camera", "display-capture", "document-domain", "geolocation", "gyroscope",
 	"magnetometer", "microphone", "midi", "payment", "publickey-credentials-get", "sync-xhr", "usb", "xr-spatial-tracking"
 ]
+
+// import 'global-agent/bootstrap';
+
 
 const pinski = new Pinski({
 	port: +process.env.PORT || constants.port,
@@ -65,7 +68,7 @@ subdirs("pug", async (err, dirs) => {
 
 	const plugins = require("pinski/plugins")
 	plugins.setInstance(pinski)
-	Object.assign(pinski.pugDefaultLocals, {constants, lang})
+	Object.assign(pinski.pugDefaultLocals, { constants, lang })
 	Object.assign(passthrough, pinski.getExports())
 
 	console.log("[.] Server started")

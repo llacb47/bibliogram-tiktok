@@ -1,8 +1,8 @@
 const constants = require("./constants")
-const {request} = require("./utils/request")
+const { request } = require("./utils/request")
 const switcher = require("./utils/torswitcher")
-const {extractSharedData} = require("./utils/body")
-const {TtlCache, RequestCache, UserRequestCache} = require("./cache")
+const { extractSharedData } = require("./utils/body")
+const { TtlCache, RequestCache, UserRequestCache } = require("./cache")
 const RequestHistory = require("./structures/RequestHistory")
 const db = require("./db")
 require("./testimports")(constants, request, extractSharedData, UserRequestCache, RequestHistory, db)
@@ -15,13 +15,22 @@ const timelineEntryCache = new TtlCache(constants.caching.resource_cache_time)
 const history = new RequestHistory(["user", "timeline", "igtv", "post", "reel"])
 
 const AssistantSwitcher = require("./structures/AssistantSwitcher")
+const user = require("../site/assistant_api/user")
+const { promise } = require("selenium-webdriver")
+//const User = require("./structures/User")
+//const TiktokUser = require("./structures/TiktokUser")
+
 const assistantSwitcher = new AssistantSwitcher()
+
+// tiktok
+//const crypto = require('crypto');
 
 /**
  * @param {string} username
  * @param {symbol} [context]
  */
 async function fetchUser(username, context) {
+	//console.log(constants.allow_user_from_reel)
 	if (constants.external.reserved_paths.includes(username)) {
 		throw constants.symbols.ENDPOINT_OVERRIDDEN
 	}
@@ -81,11 +90,17 @@ async function fetchUser(username, context) {
 	throw new Error(`Selected fetch mode ${mode} was unmatched.`)
 }
 
+let returnmebro;
+
 /**
  * @param {string} username
  * @returns {Promise<{user: import("./structures/User"), quotaUsed: number}>}
  */
 function fetchUserFromHTML(username) {
+	if (username == 'null') {
+		console.error('ERROR: null passed to fetchUserFromHTML with trace:')
+		console.trace()
+	}
 	const blockedCacheConfig = constants.caching.self_blocked_status.user_html
 	if (blockedCacheConfig) {
 		if (history.store.has("user")) {
@@ -95,8 +110,82 @@ function fetchUserFromHTML(username) {
 			}
 		}
 	}
-	return userRequestCache.getOrFetch("user/"+username, false, true, () => {
-		return switcher.request("user_html", `https://www.instagram.com/${username}/feed/`, async res => {
+	//console.log(userRequestCache)
+	return userRequestCache.getOrFetch("user/" + username, false, true, () => {
+		// get uid for tiktok username
+		return switcher.request("tiktok_username_html", 'https://www.tiktok.com/@' + username, { 'userAgent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' }, async res => {
+			//console.log(res)
+		}).then(async g => {
+			//const res = await g.response()
+			const text = await g.text();
+			const user_id = text.match(/(:\/\/user\/profile\/)(\d+)/)[2]
+			let p = new URLSearchParams();
+			p.set('user_id', user_id);
+			addTikTokParams2(p);
+			return [p, user_id];
+		}).then(async arr => {
+			let returnme2;
+			//const promiseHell = () => {
+			await switcher.request("tiktok_user_meta", `${constants.tiktok._API_PREFIX_ALT}v1/user/?${arr[0].toString()}`, { 'userAgent': 'AwemeI18n/xx.yy.zz (iPhone; iOS 15.0.1; Scale/2.00)' }, async res => {
+				//console.log(res);
+			}).then(resp => resp.json())
+				.then(async json => {
+					arr.push(json)
+					//console.log(json.user)
+					//const TTUser = require('./structures/TiktokUser')
+					//const user = new TTUser(json.user)
+					//console.log(user)
+					//return TTUser
+					let p = new URLSearchParams();
+					p.set('user_id', arr[1].toString());
+					p.set('count', '12');
+					p.set('max_cursor', '0');
+					p.set('min_cursor', '0');
+					p.set('retry_type', 'no_retry');
+					p.set('device_id', makeid(19, { 'numericalonly': 1 }))
+					addTikTokParams(p);
+					//console.log(p)
+
+
+					await switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${p.toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
+
+					}).then(resp => resp.json()).then(json2 => { arr.push(json2) }).then(async finaljson => {
+						const TTUser = require('./structures/TiktokUser')
+						const user = await new TTUser(arr[2], arr[3])
+						//console.log(user)
+						//console.log
+						return user
+					}).then(u => { returnme2 = u })
+					//let x = makeUser()
+					//console.log("THIS IS MAKEUSER")
+					//console.log(x)
+					//return x
+
+				}).then(u => {
+					//console.log("THIS IS U")
+					//console.log(u)
+					// u;
+					//console.log(returnme2)
+					returnmebro = returnme2
+					//console.log(returnme2)
+					//return returnmebro;
+				})
+			//}
+			//let poo = promiseHell()
+			//console.log("THIS IS PROMISEHELL")
+			//.log(poo)
+			//return (poo);
+			//console.log(returnmebro);
+			//})
+			return returnmebro;
+
+		})
+
+
+
+
+
+		return switcher.request("user_html", `https://www.instagram.com/${username}/feed/`, { "testoptions": "abcd" }, async res => {
 			if (res.status === 301) throw constants.symbols.ENDPOINT_OVERRIDDEN
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_DEMANDS_LOGIN
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
@@ -119,7 +208,7 @@ function fetchUserFromHTML(username) {
 						const existing = db.prepare("SELECT created, updated_version FROM Users WHERE username = ?").get(user.data.username)
 						db.prepare(
 							"REPLACE INTO Users (username,  user_id,  created,  updated,  updated_version,  biography,  post_count,  following_count,  followed_by_count,  external_url,  full_name,  is_private,  is_verified,  profile_pic_url) VALUES "
-							                 +"(@username, @user_id, @created, @updated, @updated_version, @biography, @post_count, @following_count, @followed_by_count, @external_url, @full_name, @is_private, @is_verified, @profile_pic_url)"
+							+ "(@username, @user_id, @created, @updated, @updated_version, @biography, @post_count, @following_count, @followed_by_count, @external_url, @full_name, @is_private, @is_verified, @profile_pic_url)"
 						).run({
 							username: user.data.username,
 							user_id: user.data.id,
@@ -152,7 +241,7 @@ function fetchUserFromHTML(username) {
 			}
 			throw error
 		})
-	}).then(user => ({user, quotaUsed: 0}))
+	}).then(user => ({ user, quotaUsed: 0 }))
 }
 
 /**
@@ -165,7 +254,7 @@ function updateProfilePictureFromReel(userID) {
 		user_id: userID,
 		include_reel: true
 	}))
-	return switcher.request("reel_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+	return switcher.request("reel_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, null, async res => {
 		if (res.status === 429) throw constants.symbols.RATE_LIMITED
 		return res
 	}).then(res => res.json()).then(root => {
@@ -201,8 +290,8 @@ function fetchUserFromCombined(userID, username) {
 		user_id: userID,
 		include_reel: true
 	}))
-	return userRequestCache.getOrFetch("user/"+username, true, false, () => {
-		return switcher.request("reel_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+	return userRequestCache.getOrFetch("user/" + username, true, false, () => {
+		return switcher.request("reel_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, null, async res => {
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
 			return res
 		}).then(res => res.json()).then(root => {
@@ -227,7 +316,7 @@ function fetchUserFromCombined(userID, username) {
 			if (!fetched.fromCache) quotaUsed++
 			user.timeline.addPage(fetched.result)
 		}
-		return {user, quotaUsed}
+		return { user, quotaUsed }
 	}).catch(error => {
 		if (error === constants.symbols.RATE_LIMITED) {
 			history.report("reel", false, error)
@@ -238,7 +327,7 @@ function fetchUserFromCombined(userID, username) {
 
 function fetchUserFromSaved(saved) {
 	let quotaUsed = 0
-	return userRequestCache.getOrFetch("user/"+saved.username, false, true, async () => {
+	return userRequestCache.getOrFetch("user/" + saved.username, false, true, async () => {
 		// require down here or have to deal with require loop. require cache will take care of it anyway.
 		// ReelUser -> Timeline -> TimelineEntry -> collectors -/> ReelUser
 		const ReelUser = require("./structures/ReelUser")
@@ -246,8 +335,8 @@ function fetchUserFromSaved(saved) {
 			username: saved.username,
 			id: saved.user_id,
 			biography: saved.biography,
-			edge_follow: {count: saved.following_count},
-			edge_followed_by: {count: saved.followed_by_count},
+			edge_follow: { count: saved.following_count },
+			edge_followed_by: { count: saved.followed_by_count },
 			external_url: saved.external_url,
 			full_name: saved.full_name,
 			is_private: !!saved.is_private,
@@ -256,13 +345,13 @@ function fetchUserFromSaved(saved) {
 		})
 		// Add first timeline page
 		if (!user.timeline.pages[0]) {
-			const {result: page, fromCache} = await fetchTimelinePage(user.data.id, "")
+			const { result: page, fromCache } = await fetchTimelinePage(user.data.id, "")
 			if (!fromCache) quotaUsed++
 			user.timeline.addPage(page)
 		}
 		return user
 	}).then(user => {
-		return {user, quotaUsed}
+		return { user, quotaUsed }
 	})
 }
 
@@ -289,7 +378,7 @@ function fetchTimelinePage(userID, after) {
 		after: after
 	}))
 	return requestCache.getOrFetchPromise(`page/${userID}/${after}`, () => {
-		return switcher.request("timeline_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+		return switcher.request("timeline_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, {}, async res => {
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_BLOCK_TYPE_DECEMBER
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
 		}).then(g => g.json()).then(root => {
@@ -327,7 +416,7 @@ function fetchIGTVPage(userID, after) {
 	}))
 	return requestCache.getOrFetchPromise(`igtv/${userID}/${after}`, () => {
 		// assuming this uses the same bucket as timeline, which may not be the case
-		return switcher.request("timeline_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+		return switcher.request("timeline_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, null, async res => {
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_BLOCK_TYPE_DECEMBER
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
 		}).then(g => g.json()).then(root => {
@@ -357,8 +446,8 @@ function verifyUserPair(userID, username) {
 		user_id: userID,
 		include_reel: true
 	}))
-	return requestCache.getOrFetchPromise("userID/"+userID, () => {
-		return switcher.request("reel_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+	return requestCache.getOrFetchPromise("userID/" + userID, () => {
+		return switcher.request("reel_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, null, async res => {
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_BLOCK_TYPE_DECEMBER
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
 			return res
@@ -379,11 +468,14 @@ function verifyUserPair(userID, username) {
  * @returns {import("./structures/TimelineEntry")}
  */
 function getOrCreateShortcode(shortcode) {
+	//console.log(timelineEntryCache)
 	if (timelineEntryCache.has(shortcode)) {
+		console.log("cache has shortcode")
 		return timelineEntryCache.get(shortcode)
 	} else {
 		// require down here or have to deal with require loop. require cache will take care of it anyway.
 		// TimelineEntry -> collectors -/> TimelineEntry
+		console.log("cache missing shortcode")
 		const TimelineEntry = require("./structures/TimelineEntry")
 		const result = new TimelineEntry()
 		timelineEntryCache.set(shortcode, result)
@@ -393,12 +485,13 @@ function getOrCreateShortcode(shortcode) {
 
 async function getOrFetchShortcode(shortcode) {
 	if (timelineEntryCache.has(shortcode)) {
-		return {post: timelineEntryCache.get(shortcode), fromCache: true}
+		console.log("timeline cache has shortcode")
+		return { post: timelineEntryCache.get(shortcode), fromCache: true }
 	} else {
-		const {result, fromCache} = await fetchShortcodeData(shortcode)
+		const { result, fromCache } = await fetchShortcodeData(shortcode)
 		const entry = getOrCreateShortcode(shortcode)
 		entry.applyN3(result)
-		return {post: entry, fromCache}
+		return { post: entry, fromCache }
 	}
 }
 
@@ -411,10 +504,11 @@ function fetchShortcodeData(shortcode) {
 	// query_hash=2b0673e0dc4580674a88d426fe00ea90&variables={"shortcode":"xxxxxxxxxxx","child_comment_count":3,"fetch_comment_count":40,"parent_comment_count":24,"has_threaded_comments":true}
 	// we will not include params about comments, which means we will not receive comments, but everything else should still work fine
 	const p = new URLSearchParams()
+	// console.log(addTikTokParams(p))
 	p.set("query_hash", constants.external.shortcode_query_hash)
-	p.set("variables", JSON.stringify({shortcode}))
-	return requestCache.getOrFetchPromise("shortcode/"+shortcode, () => {
-		return switcher.request("post_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+	p.set("variables", JSON.stringify({ shortcode }))
+	return requestCache.getOrFetchPromise("shortcode/" + shortcode, () => {
+		return switcher.request("post_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, null, async res => {
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_BLOCK_TYPE_DECEMBER
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
 		}).then(res => res.json()).then(root => {
@@ -427,11 +521,11 @@ function fetchShortcodeData(shortcode) {
 				history.report("post", true)
 				if (constants.caching.db_post_n3) {
 					db.prepare("REPLACE INTO Posts (shortcode, id, id_as_numeric, username, json) VALUES (@shortcode, @id, @id_as_numeric, @username, @json)")
-						.run({shortcode: data.shortcode, id: data.id, id_as_numeric: data.id, username: data.owner.username, json: JSON.stringify(data)})
+						.run({ shortcode: data.shortcode, id: data.id, id_as_numeric: data.id, username: data.owner.username, json: JSON.stringify(data) })
 				}
 				// if we have the owner but only a reelUser, update it. this code is gross.
-				if (userRequestCache.hasNotPromise("user/"+data.owner.username)) {
-					const user = userRequestCache.getWithoutClean("user/"+data.owner.username)
+				if (userRequestCache.hasNotPromise("user/" + data.owner.username)) {
+					const user = userRequestCache.getWithoutClean("user/" + data.owner.username)
 					if (user.fromReel) {
 						user.data.full_name = data.owner.full_name
 						user.data.is_verified = data.owner.is_verified
@@ -446,6 +540,90 @@ function fetchShortcodeData(shortcode) {
 			throw error
 		})
 	})
+}
+
+function addTikTokParams(params) {
+	if (!(params instanceof URLSearchParams)) {
+		throw new Error('pass URLSearchParams')
+	}
+
+	const paramsToAdd = {
+		'version_name': constants.tiktok._APP_VERSION,
+		'version_code': constants.tiktok._MANIFEST_APP_VERSION,
+		'build_number': constants.tiktok._APP_VERSION,
+		'manifest_version_code': constants.tiktok._MANIFEST_APP_VERSION,
+		'update_version_code': constants.tiktok._MANIFEST_APP_VERSION,
+		'openudid': makeid(16, { 'numericalonly': 0 }),
+		'uuid': makeid(16, { 'numericalonly': 1 }),
+		'_rticket': new Date().getTime(),
+		'ts': (new Date().getTime() + '').substr(0, 10),
+		'device_brand': 'Google',
+		'device_type': 'Pixel 4',
+		'device_platform': 'android',
+		'resolution': '1080*1920',
+		'dpi': 420,
+		'os_version': '10',
+		'os_api': '29',
+		'carrier_region': 'US',
+		'sys_region': 'US',
+		'region': 'US',
+		'app_name': 'trill',
+		'app_language': 'en',
+		'language': 'en',
+		'timezone_name': 'America/New_York',
+		'timezone_offset': '-14400',
+		'channel': 'googleplay',
+		'ac': 'wifi',
+		'mcc_mnc': '310260',
+		'is_my_cn': 0,
+		'aid': 1180,
+		'ssmix': 'a',
+		'as': 'a1qwert123',
+		'cp': 'cbfhckdckkde1'
+	}
+	// https://stackoverflow.com/questions/40047488
+	for (let key in paramsToAdd) {
+		if (paramsToAdd.hasOwnProperty(key)) {
+			params.set(key, paramsToAdd[key])
+		}
+	}
+	//return params;
+}
+
+function addTikTokParams2(params) {
+	if (!(params instanceof URLSearchParams)) {
+		throw new Error('pass URLSearchParams')
+	}
+	//let copy = params;
+	const paramsToAdd = {
+		'version_code': '2.7.0',
+		'app_name': 'trill',
+		'channel': 'a',
+		'aid': 1180,
+		'os_version': '15.0.1',
+		'device_id': constants.tiktok.deviceParams[0].device_id,
+		'iid': constants.tiktok.deviceParams[0].iid,
+		'device_platform': constants.tiktok.deviceParams[0].device_platform,
+		'device_type': constants.tiktok.deviceParams[0].device_type
+	}
+	for (let key in paramsToAdd) {
+		if (paramsToAdd.hasOwnProperty(key)) {
+			params.set(key, paramsToAdd[key])
+		}
+	}
+	//return params;
+}
+
+function makeid(length, opts) {
+	let result = '';
+	let characters = '0123456789abcdef';
+	opts.numericalonly && (characters = "0123456789");
+	let charactersLength = characters.length;
+	for (let i = 0; i < length; i++) {
+		result += characters.charAt(Math.floor(Math.random() *
+			charactersLength));
+	}
+	return result;
 }
 
 module.exports.fetchUser = fetchUser

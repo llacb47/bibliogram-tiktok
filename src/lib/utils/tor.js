@@ -1,8 +1,8 @@
 const SocksProxyAgent = require("socks-proxy-agent")
-const {connect} = require("net");
+const { connect } = require("net");
 const constants = require("../constants")
-const {request} = require("./request")
-const {RequestCache} = require("../cache")
+const { request } = require("./request")
+const { RequestCache } = require("../cache")
 
 class TorManager {
 	/**
@@ -12,7 +12,7 @@ class TorManager {
 	constructor(tor, port) {
 		this.tor = tor
 		this.port = port
-		this.agent = new SocksProxyAgent("socks5://localhost:"+this.port)
+		this.agent = new SocksProxyAgent("socks5://localhost:" + this.port)
 		this.circuitManager = new RequestCache()
 	}
 
@@ -20,7 +20,7 @@ class TorManager {
 		let done = false
 		let g
 		while (!done) {
-			g = await request(url, {agent: this.agent}, {log: true, statusLine: "TOR"})
+			g = await request(url, { agent: this.agent }, { log: true, statusLine: "TOR" })
 			try {
 				await g.check(test)
 				break
@@ -43,7 +43,7 @@ class TorManager {
 
 try {
 	var granax = require("@deadcanaries/granax")
-} catch (e) {}
+} catch (e) { }
 
 /** @type {Promise<TorManager>} */
 module.exports = new Promise(resolve => {
@@ -51,11 +51,11 @@ module.exports = new Promise(resolve => {
 		/** @type {import("@deadcanaries/granax/lib/controller")} */
 		// @ts-ignore
 		let tor
-		if (constants.tor.password == null) {
+		if (constants.tor.password == null || constants.tor.port == null) {
 			// @ts-ignore
 			tor = new granax()
 		} else {
-			tor = new granax.TorController(connect(9051), {authOnConnect: false})
+			tor = new granax.TorController(connect(9051), { authOnConnect: false })
 			tor.authenticate(`"${constants.tor.password}"`, err => {
 				if (err) console.log("Tor auth error:", err)
 			})
@@ -70,12 +70,12 @@ module.exports = new Promise(resolve => {
 				// yes, the string contains double quotes!
 				const port = +result.match(/:(\d+)/)[1]
 				const torManager = new TorManager(tor, port)
-				console.log("Tor is ready, using SOCKS port "+port)
+				console.log("Tor is ready, using SOCKS port " + port)
 				resolve(torManager)
 			})
 		})
 
-		tor.on("error", function() {
+		tor.on("error", function () {
 			console.log("Tor error!")
 			console.log(...arguments)
 		})

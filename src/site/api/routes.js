@@ -1,11 +1,11 @@
 const constants = require("../../lib/constants")
 const lang = require("../../lang")
 const switcher = require("../../lib/utils/torswitcher")
-const {fetchUser, getOrFetchShortcode, userRequestCache, history, assistantSwitcher} = require("../../lib/collectors")
-const {render, redirect, getStaticURL} = require("pinski/plugins")
-const {pugCache} = require("../passthrough")
-const {getSettings} = require("./utils/getsettings")
-const {getSettingsReferrer} = require("./utils/settingsreferrer")
+const { fetchUser, getOrFetchShortcode, userRequestCache, history, assistantSwitcher } = require("../../lib/collectors")
+const { render, redirect, getStaticURL } = require("pinski/plugins")
+const { pugCache } = require("../passthrough")
+const { getSettings } = require("./utils/getsettings")
+const { getSettingsReferrer } = require("./utils/settingsreferrer")
 const quota = require("../../lib/quota")
 
 /** @param {import("../../lib/structures/TimelineEntry")} post */
@@ -18,22 +18,22 @@ function getPostAndQuota(req, shortcode) {
 		throw constants.symbols.QUOTA_REACHED
 	}
 
-	return getOrFetchShortcode(shortcode).then(async ({post, fromCache: fromCache1}) => {
-		const {fromCache: fromCache2} = await post.fetchChildren()
-		const {fromCache: fromCache3} = await post.fetchExtendedOwnerP() // serial await is okay since intermediate fetch result is cached
-		const {fromCache: fromCache4} = await post.fetchVideoURL() // if post is not a video, function will just return, so this is fine
+	return getOrFetchShortcode(shortcode).then(async ({ post, fromCache: fromCache1 }) => {
+		const { fromCache: fromCache2 } = await post.fetchChildren()
+		const { fromCache: fromCache3 } = await post.fetchExtendedOwnerP() // serial await is okay since intermediate fetch result is cached
+		const { fromCache: fromCache4 } = await post.fetchVideoURL() // if post is not a video, function will just return, so this is fine
 
 		// I'd _love_ to be able to put these in an array, but I can't destructure directly into one, so this is easier.
 		const quotaUsed = (fromCache1 && fromCache2 && fromCache3 && fromCache4) ? 0 : 1 // if any of them is false then one request was needed to get the post.
 		const remaining = quota.add(req, quotaUsed)
 
-		return {post, remaining}
+		return { post, remaining }
 	})
 }
 
 module.exports = [
 	{
-		route: "/", methods: ["GET"], code: async ({req}) => {
+		route: "/", methods: ["GET"], code: async ({ req }) => {
 			const settings = getSettings(req)
 			return render(200, "pug/home.pug", {
 				settings,
@@ -47,10 +47,10 @@ module.exports = [
 		}
 	},
 	{
-		route: "/privacy", methods: ["GET"], code: async ({req}) => {
+		route: "/privacy", methods: ["GET"], code: async ({ req }) => {
 			const settings = getSettings(req)
 			if (constants.has_privacy_policy && pugCache.has("pug/privacy.pug")) {
-				return render(200, "pug/privacy.pug", {settings})
+				return render(200, "pug/privacy.pug", { settings })
 			} else {
 				return render(404, "pug/friendlyerror.pug", {
 					statusCode: 404,
@@ -58,14 +58,14 @@ module.exports = [
 					message: "No privacy policy",
 					explanation:
 						"The owner of this instance has not actually written a privacy policy."
-						+"\nIf you own this instance, please read the file stored at /src/site/pug/privacy.pug.template.",
+						+ "\nIf you own this instance, please read the file stored at /src/site/pug/privacy.pug.template.",
 					settings
 				})
 			}
 		}
 	},
 	{
-		route: `/u`, methods: ["GET"], code: async ({url}) => {
+		route: `/u`, methods: ["GET"], code: async ({ url }) => {
 			if (url.searchParams.has("u")) {
 				let username = url.searchParams.get("u")
 				username = username.replace(/^(https?:\/\/)?([a-z]+\.)?instagram\.com\//, "")
@@ -85,7 +85,7 @@ module.exports = [
 		}
 	},
 	{
-		route: `/u/(${constants.external.username_regex})(/channel)?`, methods: ["GET"], code: async ({req, url, fill}) => {
+		route: `/u/(${constants.external.username_regex})(/channel)?`, methods: ["GET"], code: async ({ req, url, fill }) => {
 			const username = fill[0]
 			const type = fill[1] ? "igtv" : "timeline"
 
@@ -101,7 +101,7 @@ module.exports = [
 					throw constants.symbols.QUOTA_REACHED
 				}
 
-				const {user, quotaUsed} = await fetchUser(username)
+				const { user, quotaUsed } = await fetchUser(username)
 				let remaining = quota.add(req, quotaUsed)
 
 				const selectedTimeline = user[type]
@@ -118,6 +118,7 @@ module.exports = [
 				remaining = quota.add(req, quotaUsed2)
 
 				const followerCountsAvailable = !(user.constructor.name === "ReelUser" && user.following === 0 && user.followedBy === 0)
+				//console.log(user)
 				return render(200, "pug/user.pug", {
 					url,
 					user,
@@ -143,10 +144,10 @@ module.exports = [
 				} else if (error === constants.symbols.RATE_LIMITED) {
 					return render(503, "pug/blocked_graphql.pug")
 				} else if (error === constants.symbols.extractor_results.AGE_RESTRICTED) {
-					return render(403, "pug/age_gated.pug", {settings})
+					return render(403, "pug/age_gated.pug", { settings })
 				} else if (error === constants.symbols.QUOTA_REACHED) {
 					const isProxyNetwork = quota.isProxyNetwork(req)
-					return render(429, "pug/quota_reached.pug", {isProxyNetwork})
+					return render(429, "pug/quota_reached.pug", { isProxyNetwork })
 				} else {
 					throw error
 				}
@@ -154,7 +155,7 @@ module.exports = [
 		}
 	},
 	{
-		route: `/fragment/user/(${constants.external.username_regex})/(\\d+)`, methods: ["GET"], code: async ({req, url, fill}) => {
+		route: `/fragment/user/(${constants.external.username_regex})/(\\d+)`, methods: ["GET"], code: async ({ req, url, fill }) => {
 			const username = fill[0]
 			let pageNumber = +fill[1]
 			if (isNaN(pageNumber) || pageNumber < 1) {
@@ -174,7 +175,7 @@ module.exports = [
 
 				const settings = getSettings(req)
 
-				const {user, quotaUsed} = await fetchUser(username)
+				const { user, quotaUsed } = await fetchUser(username)
 				const remaining = quota.add(req, quotaUsed)
 
 				const pageIndex = pageNumber - 1
@@ -189,7 +190,8 @@ module.exports = [
 				quota.add(req, quotaUsed2)
 
 				if (selectedTimeline.pages[pageIndex]) {
-					return render(200, "pug/fragments/timeline_page.pug", {page: selectedTimeline.pages[pageIndex], selectedTimeline, type, pageIndex, user, url, settings})
+					//console.log(selectedTimeline.pages[pageIndex])
+					return render(200, "pug/fragments/timeline_page.pug", { page: selectedTimeline.pages[pageIndex], selectedTimeline, type, pageIndex, user, url, settings })
 				} else {
 					return {
 						statusCode: 400,
@@ -218,22 +220,23 @@ module.exports = [
 		}
 	},
 	{
-		route: `/fragment/post/(${constants.external.shortcode_regex})`, methods: ["GET"], code: async ({req, fill}) => {
+		route: `/fragment/post/(${constants.external.shortcode_regex})`, methods: ["GET"], code: async ({ req, fill }) => {
 			const shortcode = fill[0]
 			const settings = getSettings(req)
 
 			try {
-				const {post, remaining} = await getPostAndQuota(req, shortcode)
+				const { post, remaining } = await getPostAndQuota(req, shortcode)
 				return {
 					statusCode: 200,
 					contentType: "application/json",
 					content: {
 						title: getPageTitle(post),
-						html: pugCache.get("pug/fragments/post.pug").web({lang, post, settings, getStaticURL}),
+						html: pugCache.get("pug/fragments/post.pug").web({ lang, post, settings, getStaticURL }),
 						quota: remaining
 					}
 				}
 			} catch (error) {
+				console.log(error)
 				if (error === constants.symbols.NOT_FOUND || constants.symbols.RATE_LIMITED || error === constants.symbols.QUOTA_REACHED || error === constants.symbols.INSTAGRAM_BLOCK_TYPE_DECEMBER) {
 					const statusCode = error === constants.symbols.QUOTA_REACHED ? 429 : 503
 					return {
@@ -250,7 +253,7 @@ module.exports = [
 		}
 	},
 	{
-		route: "/p", methods: ["GET"], code: async ({url}) => {
+		route: "/p", methods: ["GET"], code: async ({ url }) => {
 			if (url.searchParams.has("p")) {
 				let post = url.searchParams.get("p").trim()
 				post = post.replace(/^(https?:\/\/)?([a-z]+\.)?instagram\.com\/p\//, "")
@@ -267,12 +270,12 @@ module.exports = [
 		}
 	},
 	{
-		route: `/(?:p|tv|igtv|reel)/(${constants.external.shortcode_regex})`, methods: ["GET"], code: async ({req, fill}) => {
+		route: `/(?:p|tv|igtv|reel)/(${constants.external.shortcode_regex})`, methods: ["GET"], code: async ({ req, fill }) => {
 			const shortcode = fill[0]
 			const settings = getSettings(req)
 
 			try {
-				const {post} = await getPostAndQuota(req, shortcode)
+				const { post } = await getPostAndQuota(req, shortcode)
 				return render(200, "pug/post.pug", {
 					title: getPageTitle(post),
 					post,
@@ -294,7 +297,7 @@ module.exports = [
 					return render(503, "pug/blocked_graphql.pug")
 				} else if (error === constants.symbols.QUOTA_REACHED) {
 					const isProxyNetwork = quota.isProxyNetwork(req)
-					return render(429, "pug/quota_reached.pug", {isProxyNetwork})
+					return render(429, "pug/quota_reached.pug", { isProxyNetwork })
 				} else {
 					throw error
 				}

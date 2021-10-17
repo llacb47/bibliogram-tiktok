@@ -1,5 +1,5 @@
 const constants = require("../constants")
-const {request} = require("./request")
+const { request } = require("./request")
 
 class TorSwitcher {
 	constructor() {
@@ -24,21 +24,21 @@ class TorSwitcher {
 	 * @param {(res: import("./request_backends/reference").GrabResponse) => any} test
 	 * @returns {Promise<import("./request_backends/reference")>}
 	 */
-	request(type, url, test) {
-		if (this.torManager && constants.tor.for[type]) {
-			return this.torManager.request(url, test)
-		} else {
-			return request(url).check(test)
-		}
+	request(type, url, opts, test) {
+		//	if (this.torManager && constants.tor.for[type]) {
+		//		return this.torManager.request(url, test)
+		//	} else {
+		return request(url, opts).check(test)
 	}
 }
 
+
 const switcher = new TorSwitcher()
 
-if (constants.tor.enabled) {
-	require("./tor").then(torManager => {
+/*	require("./tor").then(torManager => {
 		if (torManager) switcher.setManager(torManager)
 	})
 }
+*/
 
 module.exports = switcher

@@ -80,7 +80,7 @@ class TtlCache {
 	 * @param {any} data
 	 */
 	set(key, data) {
-		this.cache.set(key, {data, time: Date.now()})
+		this.cache.set(key, { data, time: Date.now() })
 	}
 
 	/**
@@ -111,11 +111,11 @@ class RequestCache extends TtlCache {
 	getOrFetch(key, callback) {
 		this.cleanKey(key)
 		if (this.cache.has(key)) {
-			return this.getWithoutClean(key).then(result => ({result, fromCache: true}))
+			return this.getWithoutClean(key).then(result => ({ result, fromCache: true }))
 		} else {
 			const pending = callback()
 			this.set(key, pending)
-			return pending.then(result => ({result, fromCache: false}))
+			return pending.then(result => ({ result, fromCache: false }))
 		}
 	}
 
@@ -156,7 +156,7 @@ class UserRequestCache extends TtlCache {
 		const existing = this.cache.get(key)
 		// Preserve html failure status if now requesting as reel
 		const htmlFailed = isReel && existing && existing.htmlFailed
-		this.cache.set(key, {data, isReel, isFailedPromise: false, htmlFailed, reelFailed: false, time: Date.now()})
+		this.cache.set(key, { data, isReel, isFailedPromise: false, htmlFailed, reelFailed: false, time: Date.now() })
 		if (data && data.data && data.data.id) this.idCache.set(data.data.id, key) // this if statement is bad
 	}
 
@@ -170,6 +170,7 @@ class UserRequestCache extends TtlCache {
 	getOrFetch(key, willFetchReel, isHtmlPreferred, callback) {
 		this.cleanKey(key)
 		if (this.cache.has(key)) {
+			console.log(`${key} userRequestCache hit!`)
 			const existing = this.cache.get(key)
 			if (!existing.isFailedPromise) { // if the existing entry contains usable data
 				if (!existing.isReel) { // hurrah, the best we could get!
@@ -195,6 +196,7 @@ class UserRequestCache extends TtlCache {
 			}
 			return result
 		}).catch(error => {
+			//console.log(error)
 			if (willFetchReel) this.cache.get(key).reelFailed = true
 			else this.cache.get(key).htmlFailed = true
 			this.cache.get(key).isFailedPromise = true
