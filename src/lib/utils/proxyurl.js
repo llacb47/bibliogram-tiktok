@@ -18,52 +18,50 @@ function verifyHost(host) {
 function verifyURL(completeURL) {
 	const params = completeURL.searchParams
 	if (!params.get("url")) return { status: "fail", value: [400, "Must supply `url` query parameter"] }
+	var url = params.get("url")
 	try {
-		var url = new URL(params.get("url"))
+		//var url = new URL(params.get("url"))
 	} catch (e) {
-		return { status: "fail", value: [400, "`url` query parameter is not a valid URL"] }
+		//return { status: "fail", value: [400, "`url` query parameter is not a valid URL"] }
 	}
 	// check url protocol
-	if (url.protocol !== "https:") return { status: "fail", value: [400, "URL protocol must be `https:`"] }
+	//if (url.protocol !== "https:") return { status: "fail", value: [400, "URL protocol must be `https:`"] }
 	// check url host
-	if (!verifyHost(url.host)) return { status: "fail", value: [400, "URL host is not allowed"] }
+	//if (!verifyHost(url.host)) return { status: "fail", value: [400, "URL host is not allowed"] }
 	return { status: "ok", url }
 }
 
 /**
- * Rewrite URL to the image proxy.
+ * Rewrite URL to the secret proxy.
  * @param toskey 
  */
 // TODO: change param names to reflect that we are passing the toskey not the url
-function rewriteURLImageProxy(toskeyURL) {
+function rewriteURLSecretProxy(toskeyURL) {
 	const x = new URL(toskeyURL).searchParams
-	const key = unescape(x.get('url'))
+	let key = unescape(x.get('url'))
+	console.log(key)
+	if (key.charAt(0) == '/') key = key.substr(1);
+	if (key.charAt(key.length - 1) == '/') key = key.substr(0, key.length - 1);
 	if (x.get('userID')) {
 		var url = `${constants.tiktok.secretpath1}${key}.webp`
-	} else if (x.get('width')) {
+	} else if (x.get('width') || true) {
 		var url = `${constants.tiktok.secretpath2}${key}/`
 	}
 	return { status: "ok", url }
 }
 
-function proxyImage(url, width) {
+function proxyThumbOrVid(url, width) {
 	const params = new URLSearchParams()
-	if (width) params.set("width", width)
+	if (width) params.set("width", width) // this is a video thumb
 	params.set("url", url)
-	return "/imageproxy?" + params.toString()
+	return "/generalproxy?" + params.toString()
 }
 
 function proxyProfilePic(url, userID) {
 	const params = new URLSearchParams()
 	params.set("userID", userID)
 	params.set("url", url)
-	return "/imageproxy?" + params.toString()
-}
-
-function proxyVideo(url) {
-	const params = new URLSearchParams()
-	params.set("url", url)
-	return "/videoproxy?" + params.toString()
+	return "/generalproxy?" + params.toString()
 }
 
 /**
@@ -75,10 +73,10 @@ function proxyExtendedOwner(owner) {
 	return clone
 }
 
-module.exports.proxyImage = proxyImage
+module.exports.proxyThumbOrVid = proxyThumbOrVid
 module.exports.proxyProfilePic = proxyProfilePic
-module.exports.proxyVideo = proxyVideo
+//module.exports.proxyVideo = proxyVideo
 module.exports.proxyExtendedOwner = proxyExtendedOwner
 module.exports.verifyHost = verifyHost
 module.exports.verifyURL = verifyURL
-module.exports.rewriteURLImageProxy = rewriteURLImageProxy
+module.exports.rewriteURLSecretProxy = rewriteURLSecretProxy

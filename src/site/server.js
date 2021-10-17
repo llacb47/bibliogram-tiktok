@@ -49,6 +49,7 @@ subdirs("pug", async (err, dirs) => {
 	pinski.addStaticHashTableDir("html/static/img")
 	pinski.muteLogsStartingWith("/imageproxy")
 	pinski.muteLogsStartingWith("/videoproxy")
+	pinski.muteLogsStartingWith("/generalproxy")
 	pinski.muteLogsStartingWith("/static")
 
 	for (const route of constants.additional_routes) {

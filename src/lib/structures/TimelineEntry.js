@@ -1,5 +1,5 @@
 const constants = require("../constants")
-const { proxyImage, proxyExtendedOwner } = require("../utils/proxyurl")
+const { proxyThumbOrVid, proxyExtendedOwner } = require("../utils/proxyurl")
 const { compile } = require("pug")
 const collectors = require("../collectors")
 const { structure, removeTrailingHashtags } = require("../utils/structuretext")
@@ -88,7 +88,7 @@ class TimelineEntry extends TimelineBaseMethods {
 	 * All mutations should act exactly once and have no effect on already mutated data.
 	 */
 	fixData() {
-		this.date = new Date(this.data.taken_at_timestamp * 1000)
+		this.date = new Date(this.data.create_time * 1000)
 	}
 
 	getDisplayDate() {
@@ -202,7 +202,7 @@ class TimelineEntry extends TimelineBaseMethods {
 		//let src = this.data.video.cover.url_list[0]
 		let key = this.data.video.animated_cover.uri
 		if (constants.proxy_media.thumbnail) {
-			var src = proxyImage(key, this.data.video.cover.width)
+			var src = proxyThumbOrVid(key, this.data.video.cover.width)
 		}// force resize to config rather than requested
 		return {
 			config_width: this.data.video.cover.width,
@@ -252,7 +252,7 @@ class TimelineEntry extends TimelineBaseMethods {
 		let fromCache = true
 		const clone = await (async () => {
 			// Do we just already have the extended owner?
-			console.log(this.data)
+			//console.log(this.data)
 			if (this.data.author) { // this property is on extended owner and not basic owner
 				const clone = proxyExtendedOwner(this.data.author)
 				this.ownerPfpCacheP = clone.profile_pic_url
@@ -263,29 +263,29 @@ class TimelineEntry extends TimelineBaseMethods {
 
 else if (collectors.userRequestCache.getByID(this.data.owner.id)) {
 	/** @type {import("./User")} *//*
-							const user = collectors.userRequestCache.getByID(this.data.owner.id)
-							if (user.data.full_name !== undefined) {
-								this.data.owner = {
-									id: user.data.id,
-									username: user.data.username,
-									is_verified: user.data.is_verified,
-									full_name: user.data.full_name,
-									profile_pic_url: user.data.profile_pic_url // _hd is also available here.
-								}
-								const clone = proxyExtendedOwner(this.data.owner)
-								this.ownerPfpCacheP = clone.profile_pic_url
-								return clone
-							}
-							// That didn't work, so just fall through...
-						}
-						/**
-						// We'll have to re-request ourselves.
-						fromCache = false
-						await this.update()
-						const clone = proxyExtendedOwner(this.data.owner)
-						this.ownerPfpCacheP = clone.profile_pic_url
-						return clone
-						*/
+													const user = collectors.userRequestCache.getByID(this.data.owner.id)
+													if (user.data.full_name !== undefined) {
+														this.data.owner = {
+															id: user.data.id,
+															username: user.data.username,
+															is_verified: user.data.is_verified,
+															full_name: user.data.full_name,
+															profile_pic_url: user.data.profile_pic_url // _hd is also available here.
+														}
+														const clone = proxyExtendedOwner(this.data.owner)
+														this.ownerPfpCacheP = clone.profile_pic_url
+														return clone
+													}
+													// That didn't work, so just fall through...
+												}
+												/**
+												// We'll have to re-request ourselves.
+												fromCache = false
+												await this.update()
+												const clone = proxyExtendedOwner(this.data.owner)
+												this.ownerPfpCacheP = clone.profile_pic_url
+												return clone
+												*/
 		})()
 		return { owner: clone, fromCache }
 	}

@@ -1,5 +1,5 @@
 const tap = require("tap")
-const {proxyImage, proxyVideo, proxyProfilePic, proxyExtendedOwner, verifyHost, verifyURL} = require("../src/lib/utils/proxyurl")
+const { proxyThumbOrVid, proxyProfilePic, proxyExtendedOwner, verifyHost, verifyURL } = require("../src/lib/utils/proxyurl")
 
 tap.equal(
 	proxyImage("https://scontent-syd2-1.cdninstagram.com/v/t51.2885-15/e35/p1080x1080/83429487_106792960779790_3699017977444758529_n.jpg?_nc_ht=scontent-syd2-1.cdninstagram.com&_nc_cat=1&_nc_ohc=YYmv6lkrblAAX_9u9Kt&oh=81a70f2b92e70873b5ebc9253e7df937&oe=5EBC230A"),

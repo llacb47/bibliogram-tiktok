@@ -77,7 +77,7 @@ class DateCollection {
 		} else {
 			row = this.backing.get(key)
 		}
-		while (row.length < index+1) {
+		while (row.length < index + 1) {
 			row.push(0)
 		}
 		row[index]++
@@ -137,7 +137,7 @@ reader.on("line", line => {
 	//console.log(parsed)
 
 	if (!dateCollection) {
-		dateCollection = new DateCollection(dateObject.getTime(), 60*60*1000)
+		dateCollection = new DateCollection(dateObject.getTime(), 60 * 60 * 1000)
 	}
 
 	total++
@@ -151,7 +151,7 @@ reader.on("line", line => {
 	let kind = null
 	if (parsed.path === "/") {
 		kind = "home";
-	} else if (parsed.path.startsWith("/imageproxy") || parsed.path.startsWith("/videoproxy")) {
+	} else if (parsed.path.startsWith("/imageproxy") || parsed.path.startsWith("/videoproxy") || parsed.path.startsWith("/generalproxy")) {
 		kind = "proxied";
 	} else if (parsed.path.endsWith(".xml")) {
 		kind = "feed";
@@ -180,7 +180,7 @@ reader.on("line", line => {
 })
 
 function numberSummary(part, total, padSize = 6) {
-	return `${part.toString().padStart(padSize, " ")} (${(part/total*100).toFixed(1).toString().padStart(4, " ")}%)`
+	return `${part.toString().padStart(padSize, " ")} (${(part / total * 100).toFixed(1).toString().padStart(4, " ")}%)`
 }
 
 reader.on("close", () => {

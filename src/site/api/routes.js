@@ -276,6 +276,7 @@ module.exports = [
 
 			try {
 				const { post } = await getPostAndQuota(req, shortcode)
+				//console.log(post.date)
 				return render(200, "pug/post.pug", {
 					title: getPageTitle(post),
 					post,
