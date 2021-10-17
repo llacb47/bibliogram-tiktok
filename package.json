@@ -32,7 +32,6 @@
     "socks-proxy-agent": "git+https://git.sr.ht/~cadence/nodejs-socks-proxy-agent#5eef50a01667bd5c6b5626fb8e206232152dfbee"
   },
   "optionalDependencies": {
-    "@deadcanaries/granax": "^3.2.5",
     "hpagent": "^0.1.2"
   },
   "devDependencies": {
