@@ -144,7 +144,7 @@ return proxyResource(url.toString(), input.req.headers)
 },*/
 	{
 		route: '/generalproxy', methods: ['GET'], code: async (input) => {
-			console.log(input)
+			//console.log(input)
 			const rewriteResult = rewriteURLSecretProxy(input.url)
 			return proxyResource(rewriteResult.url.toString(), input.req.headers)
 		}
