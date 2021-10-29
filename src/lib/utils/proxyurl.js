@@ -42,10 +42,13 @@ function rewriteURLSecretProxy(toskeyURL) {
 	//console.log(key)
 	if (key.charAt(0) == '/') key = key.substr(1);
 	if (key.charAt(key.length - 1) == '/') key = key.substr(0, key.length - 1);
-	if (x.get('userID')) {
-		var url = `${constants.tiktok.secretpath1}${key}.webp`
-	} else if (x.get('width') || true) {
-		var url = `${constants.tiktok.secretpath2}${key}/`
+	if (x.get('userID')) { // it's a profile picture
+		var url = `${constants.tiktok.secretpath1}${key}~c5.webp`
+	} else if (x.get('width')) { // it's a video thumb
+		var url = `${constants.tiktok.secretpath1}origin/${key}.awebp` // awebp extension is not needed
+	} else { // it's a video
+		//var url = `${constants.tiktok.secretpath2}${key}/`
+		var url = `${constants.tiktok.secretpath1}origin/${key}`
 	}
 	return { status: "ok", url }
 }

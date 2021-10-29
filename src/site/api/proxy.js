@@ -26,13 +26,16 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
 		const headersToReturn = {}
-		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag",/* "content-length",*/ "transfer-encoding"]) {
+		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
 			headersToReturn[key] = response.headers.get(key)
 		}
 		// shitty fix for webp plain text
 		if (headersToReturn["content-type"] == "text/plain; charset=utf-8") {
 			headersToReturn["content-type"] = "image/webp"
 		}
+
+		headersToReturn["Accept-Ranges"] = "bytes";
+
 		return {
 			statusCode: response.status,
 			headers: headersToReturn,
@@ -146,6 +149,7 @@ return proxyResource(url.toString(), input.req.headers)
 		route: '/generalproxy', methods: ['GET'], code: async (input) => {
 			//console.log(input)
 			const rewriteResult = rewriteURLSecretProxy(input.url)
+			// console.log(rewriteResult.url + "rw result")
 			return proxyResource(rewriteResult.url.toString(), input.req.headers)
 		}
 	}

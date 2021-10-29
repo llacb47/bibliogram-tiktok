@@ -37,7 +37,7 @@ function request(url, options = {}, settings = {}) {
 			headers: {
 				"User-Agent": options.userAgent,
 				"Cookie": options.cookie,
-				"Range": ""
+				//"Range": ""
 			},
 			followRedirect: false,
 			throwHttpErrors: false,
