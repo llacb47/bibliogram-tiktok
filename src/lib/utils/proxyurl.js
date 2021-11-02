@@ -39,18 +39,24 @@ function verifyURL(completeURL) {
 function rewriteURLSecretProxy(toskeyURL) {
 	const x = new URL(toskeyURL).searchParams
 	let key = unescape(x.get('url'))
+	let domain = choose([constants.tiktok.secretpath1, constants.tiktok.secretpath1alt])
 	//console.log(key)
 	if (key.charAt(0) == '/') key = key.substr(1);
 	if (key.charAt(key.length - 1) == '/') key = key.substr(0, key.length - 1);
 	if (x.get('userID')) { // it's a profile picture
-		var url = `${constants.tiktok.secretpath1}${key}~c5.webp`
+		var url = `${domain}${key}~c5.webp`
 	} else if (x.get('width')) { // it's a video thumb
-		var url = `${constants.tiktok.secretpath1}origin/${key}.awebp` // awebp extension is not needed
+		var url = `${domain}origin/${key}.awebp` // awebp extension is not needed
 	} else { // it's a video
 		//var url = `${constants.tiktok.secretpath2}${key}/`
-		var url = `${constants.tiktok.secretpath1}origin/${key}`
+		var url = `${domain}origin/${key}`
 	}
 	return { status: "ok", url }
+}
+
+function choose(choices) {
+	var index = Math.floor(Math.random() * choices.length);
+	return choices[index];
 }
 
 function proxyThumbOrVid(url, width) {

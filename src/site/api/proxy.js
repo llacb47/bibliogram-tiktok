@@ -23,6 +23,7 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	const sent = request(url, { headers: headersToSend }, { log: false })
 	const stream = await sent.stream()
 	const response = await sent.response()
+	//let outerurl = url;
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
 		const headersToReturn = {}
@@ -43,6 +44,16 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 		}
 	} else if (refreshCallback && [410, 404, 403].includes(response.status)) { // profile picture has since changed
 		return refreshCallback()
+		//} //else if (1 && response.status == 429) {
+		// retry?
+		//	console.log("got 429")
+		//	if (outerurl.includes("p16")) {
+		//		outerurl = outerurl.replace("p16", "p19")
+		//	} else if (outerurl.includes("p19")) {
+		//		outerurl = outerurl.replace("p19", "p16")
+
+		//	}
+		//	return proxyResource(outerurl)
 	} else {
 		return {
 			statusCode: 502,
