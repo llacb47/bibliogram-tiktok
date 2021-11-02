@@ -46,10 +46,10 @@ function rewriteURLSecretProxy(toskeyURL) {
 	if (x.get('userID')) { // it's a profile picture
 		var url = `${domain}${key}~c5.webp`
 	} else if (x.get('width')) { // it's a video thumb
-		var url = `${domain}origin/${key}.awebp` // awebp extension is not needed
+		var url = `${domain}obj/${key}.awebp` // awebp extension is not needed
 	} else { // it's a video
 		//var url = `${constants.tiktok.secretpath2}${key}/`
-		var url = `${domain}origin/${key}`
+		var url = `${domain}obj/${key}`
 	}
 	return { status: "ok", url }
 }
