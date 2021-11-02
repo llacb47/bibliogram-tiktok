@@ -22,14 +22,8 @@ class TimelineEntry extends TimelineBaseMethods {
 		/** @type {import("../types").TimelineEntryAll} some properties may not be available yet! */
 		// @ts-ignore
 		this.data = {}
-		const error = new Error("TimelineEntry data was not initalised in same event loop (missing __typename)") // initialise here for a useful stack trace
-		setImmediate(() => { // next event loop
-			if (!this.data.__typename) {
-				console.error("Event loop passed. Current data:")
-				console.error(this.data)
-				throw error
-			}
-		})
+		this.data.__typename = "GraphVideo"
+
 		/** @type {string} Not available until fetchExtendedOwnerP is called */
 		this.ownerPfpCacheP = null
 		/** @type {import("./TimelineChild")[]} Not available until fetchChildren is called */
@@ -200,7 +194,8 @@ class TimelineEntry extends TimelineBaseMethods {
 		}
 		*/
 		//let src = this.data.video.cover.url_list[0]
-		let key = this.data.video.animated_cover.uri
+		// musicallys dont have animated_cover
+		let key = (typeof this.data.video.animated_cover !== "undefined") ? this.data.video.animated_cover.uri : this.data.video.cover.uri
 		if (constants.proxy_media.thumbnail) {
 			var src = proxyThumbOrVid(key, this.data.video.cover.width)
 		}// force resize to config rather than requested
@@ -224,22 +219,10 @@ class TimelineEntry extends TimelineBaseMethods {
 		await (async () => {
 			// Cached children?
 			if (this.children) return
-			// Not a gallery? Convert self to a child and return.
-			if (this.getType() !== constants.symbols.TYPE_GALLERY) {
-				this.children = [new TimelineChild(this.data)]
-				return
-			}
-			/** @type {import("../types").Edges<import("../types").GraphChildN1>|import("../types").Edges<import("../types").GraphChildVideoN3>} */
-			// @ts-ignore
-			const children = this.data.edge_sidecar_to_children
-			// It's a gallery, so we may need to fetch its children
-			// We need to fetch children if one of them is a video, because N1 has no video_url.
-			if (!children || !children.edges.length || children.edges.some(edge => edge.node.is_video && !edge.node.video_url)) {
-				fromCache = false
-				await this.update()
-			}
-			// Create children
-			this.children = this.data.edge_sidecar_to_children.edges.map(e => new TimelineChild(e.node))
+
+			this.children = [new TimelineChild(this.data)]
+			return
+
 		})()
 		return { fromCache, children: this.children }
 	}
@@ -263,29 +246,29 @@ class TimelineEntry extends TimelineBaseMethods {
 
 else if (collectors.userRequestCache.getByID(this.data.owner.id)) {
 	/** @type {import("./User")} *//*
-													const user = collectors.userRequestCache.getByID(this.data.owner.id)
-													if (user.data.full_name !== undefined) {
-														this.data.owner = {
-															id: user.data.id,
-															username: user.data.username,
-															is_verified: user.data.is_verified,
-															full_name: user.data.full_name,
-															profile_pic_url: user.data.profile_pic_url // _hd is also available here.
-														}
-														const clone = proxyExtendedOwner(this.data.owner)
-														this.ownerPfpCacheP = clone.profile_pic_url
-														return clone
-													}
-													// That didn't work, so just fall through...
-												}
-												/**
-												// We'll have to re-request ourselves.
-												fromCache = false
-												await this.update()
-												const clone = proxyExtendedOwner(this.data.owner)
-												this.ownerPfpCacheP = clone.profile_pic_url
-												return clone
-												*/
+																											const user = collectors.userRequestCache.getByID(this.data.owner.id)
+																											if (user.data.full_name !== undefined) {
+																												this.data.owner = {
+																													id: user.data.id,
+																													username: user.data.username,
+																													is_verified: user.data.is_verified,
+																													full_name: user.data.full_name,
+																													profile_pic_url: user.data.profile_pic_url // _hd is also available here.
+																												}
+																												const clone = proxyExtendedOwner(this.data.owner)
+																												this.ownerPfpCacheP = clone.profile_pic_url
+																												return clone
+																											}
+																											// That didn't work, so just fall through...
+																										}
+																										/**
+																										// We'll have to re-request ourselves.
+																										fromCache = false
+																										await this.update()
+																										const clone = proxyExtendedOwner(this.data.owner)
+																										this.ownerPfpCacheP = clone.profile_pic_url
+																										return clone
+																										*/
 		})()
 		return { owner: clone, fromCache }
 	}

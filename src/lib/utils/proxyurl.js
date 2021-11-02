@@ -39,7 +39,8 @@ function verifyURL(completeURL) {
 function rewriteURLSecretProxy(toskeyURL) {
 	const x = new URL(toskeyURL).searchParams
 	let key = unescape(x.get('url'))
-	let domain = choose([constants.tiktok.secretpath1, constants.tiktok.secretpath1alt])
+	let domain = choose(constants.tiktok.secretpaths)
+	//console.log(domain)
 	//console.log(key)
 	if (key.charAt(0) == '/') key = key.substr(1);
 	if (key.charAt(key.length - 1) == '/') key = key.substr(0, key.length - 1);

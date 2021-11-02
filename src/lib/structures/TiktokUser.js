@@ -20,6 +20,7 @@ class TiktokUser extends BaseUser {
         this.timeline = new Timeline(this, "timeline")
         this.cachedAt = Date.now()
         this.computeProxyProfilePic()
+        this.hasMore = true // assume true until otherwise
         // profile pics
 
 

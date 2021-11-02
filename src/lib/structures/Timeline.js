@@ -18,6 +18,7 @@ function transformEdges(edges) {
 		// @ts-ignore
 		const entry = collectors.getOrCreateShortcode(data.aweme_id)
 		entry.apply(data)
+		// TODO: make this not terrible
 		// HACK for __typename
 		entry.data.__typename = "GraphVideo"
 		//console.log('ENTRY IS')
@@ -55,7 +56,7 @@ class Timeline {
 
 	hasNextPage() {
 		// @ts-ignore
-		return !this.page_info || this.page_info.has_next_page
+		return this.user.hasMore
 	}
 
 	fetchNextPage() {
@@ -69,10 +70,17 @@ class Timeline {
 		const after = this.user.cursor
 		// @ts-ignore
 		return method(this.user.data.user.uid, after).then(({ result: coolArray, fromCache }) => {
+			this.user.hasMore = !coolArray[2]
+			//if (this.user.hasMore) {
 			this.user.newCursor = coolArray[1];
 			const quotaUsed = fromCache ? 0 : 1
 			this.addPage(coolArray[0])
 			return { page: this.pages.slice(-1)[0], quotaUsed }
+			//} else {
+			//this.user.hasMore = false
+			//	console.log("hasMore is false")
+			// return constants.symbols.NO_MORE_PAGES
+			//}
 		})
 	}
 
@@ -91,7 +99,7 @@ class Timeline {
 		// update whether the user should be private
 		// TODO: fix timeline fetching for a private user
 		// Ideally, we will not req aweme/post if a user is private
-		//console.log(page)
+		//console.log("page is " + page)
 		if (page !== null) {
 			if (this.pages.length === 0 && page.count > 0) { // this is the first page, and user has posted
 				//const shouldBePrivate = page.edges.length === 0
@@ -112,6 +120,8 @@ class Timeline {
 			if (this.type === "timeline") {
 				this.user.posts = page.length
 			}
+		} else {
+			this.pages.push([])
 		}
 	}
 

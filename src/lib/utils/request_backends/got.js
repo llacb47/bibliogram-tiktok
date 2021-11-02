@@ -1,6 +1,6 @@
 try {
 	var got = require("got").default
-} catch (e) {}
+} catch (e) { }
 
 class Got {
 	constructor(url, options, stream) {
@@ -10,6 +10,7 @@ class Got {
 	}
 
 	stream() {
+		delete this.options.url // options.url cannot be present https://github.com/sindresorhus/got/issues/1118#issuecomment-598466997
 		return Promise.resolve(got.stream(this.url, this.options))
 	}
 

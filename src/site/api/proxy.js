@@ -5,10 +5,15 @@ const { request } = require("../../lib/utils/request")
 const { verifyURL, rewriteURLSecretProxy } = require("../../lib/utils/proxyurl")
 const db = require("../../lib/db")
 require("../../lib/testimports")(constants, request, db, verifyURL)
+const { backOff } = require("exponential-backoff");
 
 
 function statusCodeIsAcceptable(status) {
 	return (status >= 200 && status < 300) || status === 304
+}
+
+function requestWasRateLimited(status) {
+	return (status === 429)
 }
 
 /**
@@ -20,48 +25,67 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	for (const key of ["accept", "accept-encoding", "accept-language"]) {
 		if (suggestedHeaders[key]) headersToSend[key] = suggestedHeaders[key]
 	}
-	const sent = request(url, { headers: headersToSend }, { log: false })
-	const stream = await sent.stream()
-	const response = await sent.response()
+	let sent, stream, response;
+	sent = request(url, { headers: headersToSend }, { log: false })
+	response = await sent.response()
+	if (requestWasRateLimited(response.status)) {
+		// console.log("UGH ... A 429")
+		throw new Error("Request failed... 429 status code")
+	}
+	stream = await sent.stream()
 	//let outerurl = url;
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
 		const headersToReturn = {}
-		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
+		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", /*"accept-ranges",*/ "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
 			headersToReturn[key] = response.headers.get(key)
 		}
+		//let headerIterator = response.headers.entries()
+		//for (let i = 0; i < response.headers.size; i++) {
+		//	console.log("header " + i + " is " + headerIterator.next().value);
+		//}
+		headersToReturn["x-upstream-cache-status"] = response.headers.get("x-bdcdn-cache-status")
+		headersToReturn["x-upstream-cdn-cache"] = response.headers.get("x-cache")
+		headersToReturn["x-upstream-fastly-served-by"] = response.headers.get("x-served-by")
+		headersToReturn["x-upstream-timing"] = response.headers.get("server-timing")
+
 		// shitty fix for webp plain text
 		if (headersToReturn["content-type"] == "text/plain; charset=utf-8") {
 			headersToReturn["content-type"] = "image/webp"
 		}
 
-		headersToReturn["Accept-Ranges"] = "bytes";
+		// headersToReturn["Accept-Ranges"] = "bytes";
+		// TODO: implement chunking/partial content serving 
+		// without this: chrome users cant seek thru the video
 
 		return {
 			statusCode: response.status,
 			headers: headersToReturn,
 			stream: stream
 		}
-	} else if (refreshCallback && [410, 404, 403].includes(response.status)) { // profile picture has since changed
-		return refreshCallback()
-		//} //else if (1 && response.status == 429) {
-		// retry?
-		//	console.log("got 429")
-		//	if (outerurl.includes("p16")) {
-		//		outerurl = outerurl.replace("p16", "p19")
-		//	} else if (outerurl.includes("p19")) {
-		//		outerurl = outerurl.replace("p19", "p16")
+	}
+	//else if (refreshCallback && [410, 404, 403].includes(response.status)) { // profile picture has since changed
+	//	return refreshCallback()
+	//} //else if (1 && response.status == 429) {
+	// retry?
+	//	console.log("got 429")
+	//	if (outerurl.includes("p16")) {
+	//		outerurl = outerurl.replace("p16", "p19")
+	//	} else if (outerurl.includes("p19")) {
+	//		outerurl = outerurl.replace("p19", "p16")
 
-		//	}
-		//	return proxyResource(outerurl)
-	} else {
-		return {
-			statusCode: 502,
-			headers: {
-				"Content-Type": "text/plain; charset=UTF-8"
-			},
-			content: `Instagram returned HTTP status ${response.status}, which is not a success code.`
-		}
+	//	}
+	//	return proxyResource(outerurl)
+	else if ([503, 429].includes(response.status)) {
+		//return {
+		//	statusCode: 502,
+		//	headers: {
+		//		"Content-Type": "text/plain; charset=UTF-8"
+		//	},
+		//	content: `Instagram returned HTTP status ${response.status}, which is not a success code.`
+		//}
+		//console.log(`Request failed with status code ${response.status}`)
+		//throw "Request failed."
 	}
 }
 
@@ -161,7 +185,12 @@ return proxyResource(url.toString(), input.req.headers)
 			//console.log(input)
 			const rewriteResult = rewriteURLSecretProxy(input.url)
 			// console.log(rewriteResult.url + "rw result")
-			return proxyResource(rewriteResult.url.toString(), input.req.headers)
+			return await backOff(() => proxyResource(rewriteResult.url.toString(), input.req.headers), { startingDelay: 500 })
+			//try {
+			//	return proxyResource(rewriteResult.url.toString(), input.req.headers)
+			//} catch (e) {
+			//	console.log(e)
+			//}
 		}
 	}
 ]

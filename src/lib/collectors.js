@@ -15,12 +15,19 @@ const timelineEntryCache = new TtlCache(constants.caching.resource_cache_time)
 const history = new RequestHistory(["user", "timeline", "igtv", "post", "reel"])
 
 const AssistantSwitcher = require("./structures/AssistantSwitcher")
+// @ts-ignore
+// @ts-ignore
 const user = require("../site/assistant_api/user")
+// @ts-ignore
+// @ts-ignore
 const { promise } = require("selenium-webdriver")
 //const User = require("./structures/User")
 //const TiktokUser = require("./structures/TiktokUser")
 
 const assistantSwitcher = new AssistantSwitcher()
+
+// @ts-ignore
+const { backOff } = require("exponential-backoff");
 
 // tiktok
 //const crypto = require('crypto');
@@ -113,6 +120,8 @@ function fetchUserFromHTML(username) {
 	//console.log(userRequestCache)
 	return userRequestCache.getOrFetch("user/" + username, false, true, () => {
 		// get uid for tiktok username
+		// @ts-ignore
+		// @ts-ignore
 		return switcher.request("tiktok_username_html", 'https://www.tiktok.com/@' + username, { 'userAgent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)' }, async res => {
 			//console.log(res)
 		}).then(async g => {
@@ -126,6 +135,8 @@ function fetchUserFromHTML(username) {
 		}).then(async arr => {
 			let returnme2;
 			//const promiseHell = () => {
+			// @ts-ignore
+			// @ts-ignore
 			await switcher.request("tiktok_user_meta", `${constants.tiktok._API_PREFIX_ALT}v1/user/?${arr[0].toString()}`, { 'userAgent': 'AwemeI18n/xx.yy.zz (iPhone; iOS 15.0.1; Scale/2.00)' }, async res => {
 				//console.log(res);
 			}).then(resp => resp.json())
@@ -136,31 +147,48 @@ function fetchUserFromHTML(username) {
 					//const user = new TTUser(json.user)
 					//console.log(user)
 					//return TTUser
-					let p = new URLSearchParams();
-					p.set('user_id', arr[1].toString());
-					p.set('count', '12');
-					p.set('max_cursor', '0');
-					p.set('min_cursor', '0');
-					p.set('retry_type', 'no_retry');
-					p.set('device_id', makeid(19, { 'numericalonly': 1 }))
-					addTikTokParams(p);
 					//console.log(p)
 
 
-					await switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${p.toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
+					// @ts-ignore
+					//console.log(arr)
+					// @ts-ignore
+					await backOff(() => switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${getParamsForVideoList(arr[0].get('user_id')).toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
 
-					}).then(resp => resp.json()).then(json2 => { arr.push(json2) }).then(async finaljson => {
-						const TTUser = require('./structures/TiktokUser')
-						const user = await new TTUser(arr[2], arr[3])
-						//console.log(user)
-						//console.log
-						return user
-					}).then(u => { returnme2 = u })
+					})
+						/*
+						.then(resp => {
+							console.log(resp)
+							// @ts-ignore
+							//if (!(Number(resp.headers.get("content-length")) > 0)) {
+							//	return Promise.reject("Tiktok returned a 0-byte response");
+							//}
+						})*/
+						// @ts-ignore
+						.then(resp => resp.json()).then(json2 => {
+							//console.log(json2)
+							if (typeof json2 == "string") {
+								// @ts-ignore
+								console.log("tiktok gave a 0 byte response!")
+								return Promise.reject("Tiktok returned a 0-byte response");
+							}
+							//console.log(json2);
+							arr.push(json2)
+							// @ts-ignore
+						}).then(async finaljson => {
+							const TTUser = require('./structures/TiktokUser')
+							const user = await new TTUser(arr[2], arr[3])
+							//console.log(user)
+							//console.log
+							return user
+						}).then(u => { returnme2 = u }), { retry: (e, num) => { console.log(e); return true; } })
 					//let x = makeUser()
 					//console.log("THIS IS MAKEUSER")
 					//console.log(x)
 					//return x
 
+					// @ts-ignore
+					// @ts-ignore
 				}).then(u => {
 					//console.log("THIS IS U")
 					//console.log(u)
@@ -185,6 +213,8 @@ function fetchUserFromHTML(username) {
 
 
 
+		// @ts-ignore
+		// @ts-ignore
 		return switcher.request("user_html", `https://www.instagram.com/${username}/feed/`, { "testoptions": "abcd" }, async res => {
 			if (res.status === 301) throw constants.symbols.ENDPOINT_OVERRIDDEN
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_DEMANDS_LOGIN
@@ -405,27 +435,36 @@ function fetchTimelinePage(userID, after) {
 	})
 	*/
 
-	let p = new URLSearchParams();
-	p.set('user_id', userID);
-	p.set('count', '12');
-	p.set('max_cursor', after);
-	p.set('min_cursor', '0');
-	p.set('retry_type', 'no_retry');
-	p.set('device_id', makeid(19, { 'numericalonly': 1 }))
-	addTikTokParams(p);
+	//let p = new URLSearchParams();
+	//p.set('user_id', userID);
+	//p.set('count', '12');
+	//p.set('max_cursor', after);
+	//p.set('min_cursor', '0');
+	//p.set('retry_type', 'no_retry');
+	//p.set('device_id', makeid(19, { 'numericalonly': 1 }))
+
 
 	//try {
 	return requestCache.getOrFetchPromise(`page/${userID}/${after}`, () => {
-		return switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${p.toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
+		// @ts-ignore
+		// @ts-ignore
+		return backOff(() => switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${getParamsForVideoList(userID, after).toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
 
 		}).then(resp => resp.json()).then(root => {
-			const timeline = root.aweme_list
+			console.log("typeof paging json is " + typeof root)
+			if (typeof root == "string") {
+				console.log("Tiktok returned a 0-byte response while paging")
+				return Promise.reject("Tiktok returned a 0-byte response");
+			}
+			const timeline = root.aweme_list || null
 			const cursor = root.max_cursor
+			const shouldStopPaging = (root.aweme_list == null)
+			console.log("should stop paging is " + shouldStopPaging)
 			history.report("timeline", true)
-			return [timeline, cursor]
+			return [timeline, cursor, shouldStopPaging]
 		}).catch(error => {
 			throw error
-		})
+		}))
 	})
 	//}
 	//catch (e) {
@@ -507,7 +546,7 @@ function getOrCreateShortcode(shortcode) {
 	} else {
 		// require down here or have to deal with require loop. require cache will take care of it anyway.
 		// TimelineEntry -> collectors -/> TimelineEntry
-		console.log("cache missing shortcode")
+		//console.log("cache missing shortcode")
 		const TimelineEntry = require("./structures/TimelineEntry")
 		const result = new TimelineEntry()
 		timelineEntryCache.set(shortcode, result)
@@ -517,7 +556,7 @@ function getOrCreateShortcode(shortcode) {
 
 async function getOrFetchShortcode(shortcode) {
 	if (timelineEntryCache.has(shortcode)) {
-		console.log("timeline cache has shortcode")
+		// console.log("timeline cache has shortcode")
 		return { post: timelineEntryCache.get(shortcode), fromCache: true }
 	} else {
 		const { result, fromCache } = await fetchShortcodeData(shortcode)
@@ -531,20 +570,20 @@ async function getOrFetchShortcode(shortcode) {
  * @param {string} shortcode
  * @returns {Promise<{result: import("./types").TimelineEntryN3, fromCache: boolean}>}
  */
-function fetchShortcodeData(shortcode) {
+function fetchShortcodeData(video_id) {
 	// example actual query from web:
 	// query_hash=2b0673e0dc4580674a88d426fe00ea90&variables={"shortcode":"xxxxxxxxxxx","child_comment_count":3,"fetch_comment_count":40,"parent_comment_count":24,"has_threaded_comments":true}
 	// we will not include params about comments, which means we will not receive comments, but everything else should still work fine
 	const p = new URLSearchParams()
-	// console.log(addTikTokParams(p))
-	p.set("query_hash", constants.external.shortcode_query_hash)
-	p.set("variables", JSON.stringify({ shortcode }))
-	return requestCache.getOrFetchPromise("shortcode/" + shortcode, () => {
+	p.set("aweme_id", video_id)
+	addTikTokParams(p)
+	/*
+	requestCache.getOrFetchPromise("shortcode/" + shortcode, () => {
 		return switcher.request("post_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, null, async res => {
 			if (res.status === 302) throw constants.symbols.INSTAGRAM_BLOCK_TYPE_DECEMBER
 			if (res.status === 429) throw constants.symbols.RATE_LIMITED
 		}).then(res => res.json()).then(root => {
-			/** @type {import("./types").TimelineEntryN3} */
+			/// @type {import("./types").TimelineEntryN3}
 			const data = root.data.shortcode_media
 			if (data == null) {
 				// the thing doesn't exist
@@ -571,7 +610,31 @@ function fetchShortcodeData(shortcode) {
 			}
 			throw error
 		})
+		*/
+
+	return requestCache.getOrFetchPromise("shortcode/" + video_id, () => {
+		// @ts-ignore
+		// @ts-ignore
+		return switcher.request("tiktok_video_detail", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/detail/?${p.toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
+
+		}).then(resp => resp.json()).then(root => {
+			if (typeof root.aweme_detail == "undefined") {
+				throw constants.symbols.NOT_FOUND
+			} else {
+				const aweme_data = root.aweme_detail
+				history.report("post", true)
+				if (constants.caching.db_post_n3) {
+					db.prepare("REPLACE INTO Posts (shortcode, id, id_as_numeric, username, json) VALUES (@shortcode, @id, @id_as_numeric, @username, @json)")
+						// TODO: remove shortcode field in db
+						.run({ shortcode: aweme_data.aweme_id, id: aweme_data.aweme_id, id_as_numeric: aweme_data.aweme_id, username: aweme_data.author.unique_id, json: JSON.stringify(aweme_data) })
+				}
+				return aweme_data
+			}
+		}).catch(error => {
+			throw error
+		})
 	})
+
 }
 
 function addTikTokParams(params) {
@@ -620,6 +683,19 @@ function addTikTokParams(params) {
 		}
 	}
 	//return params;
+}
+
+function getParamsForVideoList(uid, cursor = "0") {
+	let p = new URLSearchParams();
+	//p.set('user_id', arr[1].toString());
+	p.set('user_id', uid)
+	p.set('count', '12');
+	p.set('max_cursor', cursor);
+	p.set('min_cursor', '0');
+	p.set('retry_type', 'no_retry');
+	p.set('device_id', makeid(19, { 'numericalonly': 1 }))
+	addTikTokParams(p);
+	return p;
 }
 
 function addTikTokParams2(params) {

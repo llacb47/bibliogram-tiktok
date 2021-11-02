@@ -196,7 +196,7 @@ module.exports = [
 					return {
 						statusCode: 400,
 						contentType: "text/html",
-						content: "That page does not exist."
+						content: "That page does not exist. Tried to access index " + pageIndex + " on pages length " + selectedTimeline.pages.length
 					}
 				}
 			} catch (error) {

@@ -31,6 +31,7 @@ function request(url, options = {}, settings = {}) {
 			redirect: "manual"
 		}, options))
 	} else if (constants.request_backend === "got") {
+		//console.log(options)
 		//let assignmetoua = userAgent;
 		//try { options.userAgent && (assignmetoua = options.userAgent); } catch (e) { }
 		return new Got(url, Object.assign({

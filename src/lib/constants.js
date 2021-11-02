@@ -265,8 +265,7 @@ let constants = {
 		_API_PREFIX: 'https://api-t2.tiktokv.com/aweme/',
 		_API_PREFIX_ALT: 'https://api.tiktokv.com/aweme/',
 		deviceParams: [],
-		secretpath1: '',
-		secretpath1alt: '',
+		secretpaths: [],
 		secretpath2: ''
 	},
 
