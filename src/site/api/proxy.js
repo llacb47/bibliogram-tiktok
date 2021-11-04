@@ -21,7 +21,7 @@ function requestWasRateLimited(status) {
  */
 async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null) {
 	// console.log(`Asked to proxy ${url}\n`, suggestedHeaders)
-	const headersToSend = {}
+	const headersToSend = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36' }
 	for (const key of ["accept", "accept-encoding", "accept-language"]) {
 		if (suggestedHeaders[key]) headersToSend[key] = suggestedHeaders[key]
 	}
@@ -185,7 +185,7 @@ return proxyResource(url.toString(), input.req.headers)
 			//console.log(input)
 			const rewriteResult = rewriteURLSecretProxy(input.url)
 			// console.log(rewriteResult.url + "rw result")
-			return await backOff(() => proxyResource(rewriteResult.url.toString(), input.req.headers), { startingDelay: 500 })
+			return await backOff(() => proxyResource(rewriteResult.url.toString(), input.req.headers), { jitter: 'full' })
 			//try {
 			//	return proxyResource(rewriteResult.url.toString(), input.req.headers)
 			//} catch (e) {

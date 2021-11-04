@@ -246,8 +246,10 @@ body
 
 
 	.timeline
-		/*--image-size: 260px*/
-		$image-size: var(--image-size)
+		--image-width: 270px
+		--image-height: 480px
+		$image-width: var(--image-width)
+		$image-height: var(--image-height)
 		flex: 1
 
 		@media screen and (max-width: $layout-a-max)
@@ -296,8 +298,8 @@ body
 				justify-items: center
 
 			@mixin sized()
-				width: $image-size
-				height: $image-size
+				width: $image-width
+				height: $image-height
 
 			.sized-link
 				$margin: 1px

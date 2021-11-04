@@ -195,9 +195,11 @@ class TimelineEntry extends TimelineBaseMethods {
 		*/
 		//let src = this.data.video.cover.url_list[0]
 		// musicallys dont have animated_cover
-		let key = (typeof this.data.video.animated_cover !== "undefined") ? this.data.video.animated_cover.uri : this.data.video.cover.uri
+		// TODO: add setting for user wants animated cover
+		//let key = (typeof this.data.video.animated_cover !== "undefined") ? this.data.video.animated_cover.uri : this.data.video.cover.uri
+		let key = 'bigchungus'
 		if (constants.proxy_media.thumbnail) {
-			var src = proxyThumbOrVid(key, this.data.video.cover.width)
+			var src = proxyThumbOrVid(key, this.data.video.cover.width, this.data.aweme_id)
 		}// force resize to config rather than requested
 		return {
 			config_width: this.data.video.cover.width,
@@ -246,29 +248,29 @@ class TimelineEntry extends TimelineBaseMethods {
 
 else if (collectors.userRequestCache.getByID(this.data.owner.id)) {
 	/** @type {import("./User")} *//*
-																											const user = collectors.userRequestCache.getByID(this.data.owner.id)
-																											if (user.data.full_name !== undefined) {
-																												this.data.owner = {
-																													id: user.data.id,
-																													username: user.data.username,
-																													is_verified: user.data.is_verified,
-																													full_name: user.data.full_name,
-																													profile_pic_url: user.data.profile_pic_url // _hd is also available here.
+																													const user = collectors.userRequestCache.getByID(this.data.owner.id)
+																													if (user.data.full_name !== undefined) {
+																														this.data.owner = {
+																															id: user.data.id,
+																															username: user.data.username,
+																															is_verified: user.data.is_verified,
+																															full_name: user.data.full_name,
+																															profile_pic_url: user.data.profile_pic_url // _hd is also available here.
+																														}
+																														const clone = proxyExtendedOwner(this.data.owner)
+																														this.ownerPfpCacheP = clone.profile_pic_url
+																														return clone
+																													}
+																													// That didn't work, so just fall through...
 																												}
+																												/**
+																												// We'll have to re-request ourselves.
+																												fromCache = false
+																												await this.update()
 																												const clone = proxyExtendedOwner(this.data.owner)
 																												this.ownerPfpCacheP = clone.profile_pic_url
 																												return clone
-																											}
-																											// That didn't work, so just fall through...
-																										}
-																										/**
-																										// We'll have to re-request ourselves.
-																										fromCache = false
-																										await this.update()
-																										const clone = proxyExtendedOwner(this.data.owner)
-																										this.ownerPfpCacheP = clone.profile_pic_url
-																										return clone
-																										*/
+																												*/
 		})()
 		return { owner: clone, fromCache }
 	}

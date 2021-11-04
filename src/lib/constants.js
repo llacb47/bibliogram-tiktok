@@ -155,7 +155,7 @@ let constants = {
 			replaceEmptyWithDefault: false
 		}, {
 			name: "infinite_scroll",
-			default: "normal",
+			default: "off",
 			boolean: false,
 			replaceEmptyWithDefault: true
 		}, {
@@ -266,7 +266,9 @@ let constants = {
 		_API_PREFIX_ALT: 'https://api.tiktokv.com/aweme/',
 		deviceParams: [],
 		secretpaths: [],
-		secretpath2: ''
+		secretpath2: '',
+		secretpath3: '',
+		secretpath4: ''
 	},
 
 	resources: {

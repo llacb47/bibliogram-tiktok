@@ -1,5 +1,5 @@
-import {ElemJS, q} from "./elemjs/elemjs.js"
-import {quota} from "./quota.js"
+import { ElemJS, q } from "./elemjs/elemjs.js"
+import { quota } from "./quota.js"
 
 class FreezeWidth extends ElemJS {
 	freeze(text) {
@@ -50,7 +50,7 @@ class NextPage extends FreezeWidth {
 		this.attribute("href", "javascript:void(0)")
 		this.event("click", event => this.onClick(event))
 
-		this.observer = new IntersectionObserver(entries => this.onIntersect(entries), {rootMargin: "0px", threshold: intersectionThreshold})
+		this.observer = new IntersectionObserver(entries => this.onIntersect(entries), { rootMargin: "0px", threshold: intersectionThreshold })
 		this.observer.observe(this.element)
 	}
 
@@ -67,9 +67,10 @@ class NextPage extends FreezeWidth {
 	onIntersect(entries) {
 		if (entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= intersectionThreshold)) {
 			if (this.fetching) return
-			this.class("disabled")
-			this.class("clicked")
-			this.fetch()
+			console.log('Infinite scroll deactivated')
+			//this.class("disabled")
+			//this.class("clicked")
+			//this.fetch()
 		}
 	}
 
@@ -97,4 +98,4 @@ class NextPage extends FreezeWidth {
 
 const controller = new NextPageController()
 controller.add()
-export {controller}
+export { controller }
