@@ -268,7 +268,8 @@ let constants = {
 		secretpaths: [],
 		secretpath2: '',
 		secretpath3: '',
-		secretpath4: ''
+		secretpath4: '',
+		secretpath5: ''
 	},
 
 	resources: {

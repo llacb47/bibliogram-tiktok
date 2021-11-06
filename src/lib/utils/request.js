@@ -43,7 +43,7 @@ function request(url, options = {}, settings = {}) {
 			followRedirect: false,
 			throwHttpErrors: false,
 			/// below is for fiddler debugging
-			///*
+
 			agent: {
 				http: new HttpProxyAgent({
 					keepAlive: true,
@@ -64,7 +64,7 @@ function request(url, options = {}, settings = {}) {
 				})
 
 			}
-			//*/
+
 		}, options))
 	} else if (constants.request_backend === "saved") {
 		return new SavedRequestManager(url).request()

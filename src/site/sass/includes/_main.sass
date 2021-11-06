@@ -310,12 +310,14 @@ body
 				background-color: map-get($theme, "background-timeline-loading")
 				text-decoration: none
 				overflow: hidden
-				@include sized
+				width: 23%
+				margin-right: 10px
+				margin-bottom: 10px
 
 				&:hover, &:focus
 					$border-width: 3px
-					margin: $margin - $border-width
-					border-width: $border-width
+					$margin: $margin - $border-width
+					$border-width: $border-width
 
 				@media screen and (max-width: $layout-c-max)
 					$margin: 2px
@@ -328,6 +330,20 @@ body
 
 				.sized-image
 					@include sized
+
+				.sized-image-div
+					position: relative
+					padding-top: 133.2%
+					background-repeat: no-repeat
+					background-position: 50%
+					background-size: cover
+
+				.timeline-item
+					display: block
+					border-right: 1px solid #f5f5f5
+					border-bottom: 1px solid #f5f5f5
+					background-color: #5b5d66
+					vertical-align: bottom
 
 .post-page
 	background-color: map-get($theme, "background-post-distraction")

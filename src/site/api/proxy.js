@@ -21,12 +21,19 @@ function requestWasRateLimited(status) {
  */
 async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null) {
 	// console.log(`Asked to proxy ${url}\n`, suggestedHeaders)
-	const headersToSend = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36' }
+	const headersToSend = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0' }
+	//console.log(suggestedHeaders)
+	if ("range" in suggestedHeaders && !url.includes('-maliva.')) {
+		//console.log(suggestedHeaders["range"])
+		//if (suggestedHeaders["range"] !== "bytes=0-") {
+		headersToSend["range"] = suggestedHeaders["range"];
+		//}
+	}
 	for (const key of ["accept", "accept-encoding", "accept-language"]) {
 		if (suggestedHeaders[key]) headersToSend[key] = suggestedHeaders[key]
 	}
 	let sent, stream, response;
-	sent = request(url, { headers: headersToSend }, { log: false })
+	sent = request(url, { headers: headersToSend, followRedirect: true }, { log: false })
 	response = await sent.response()
 	if (requestWasRateLimited(response.status)) {
 		// console.log("UGH ... A 429")
@@ -37,7 +44,7 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
 		const headersToReturn = {}
-		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", /*"accept-ranges",*/ "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
+		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
 			headersToReturn[key] = response.headers.get(key)
 		}
 		//let headerIterator = response.headers.entries()
@@ -54,7 +61,8 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 			headersToReturn["content-type"] = "image/webp"
 		}
 
-		// headersToReturn["Accept-Ranges"] = "bytes";
+		headersToReturn["cache-control"] = constants.caching.image_cache_control
+		headersToReturn["accept-ranges"] = "bytes";
 		// TODO: implement chunking/partial content serving 
 		// without this: chrome users cant seek thru the video
 
@@ -182,7 +190,10 @@ return proxyResource(url.toString(), input.req.headers)
 },*/
 	{
 		route: '/generalproxy', methods: ['GET'], code: async (input) => {
-			//console.log(input)
+			//console.log(input.req.headers)
+			//if ("Range" in input.req.headers) {
+			//
+			//}
 			const rewriteResult = rewriteURLSecretProxy(input.url)
 			// console.log(rewriteResult.url + "rw result")
 			return await backOff(() => proxyResource(rewriteResult.url.toString(), input.req.headers), { jitter: 'full' })

@@ -44,7 +44,7 @@ mixin post(post, headerWithNavigation)
 		section.images-gallery
 			for entry in post.children
 				if entry.isVideo()
-					video(src=entry.getVideoUrlP() controls preload="auto" /*width=entry.data.dimensions.width height=entry.data.dimensions.height*/).sized-video
+					video(src=entry.getVideoUrlP() controls preload="auto" poster=`${post.getSuggestedThumbnailP().src}` /*width=entry.data.dimensions.width height=entry.data.dimensions.height*/).sized-video
 				else
 					img(src=entry.getDisplayUrlP() alt=entry.getAlt() width=entry.data.dimensions.width height=entry.data.dimensions.height).sized-image
 				if willDisplayAltInGallery

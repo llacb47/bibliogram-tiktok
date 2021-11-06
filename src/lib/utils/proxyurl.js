@@ -57,7 +57,9 @@ function rewriteURLSecretProxy(toskeyURL) {
 		var url = `${domain}${key}`
 		isOldBucket && (url += '/')
 		*/
-		var url = `${constants.tiktok.secretpath4}${x.get('video_id')}&${Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)}`
+		var url = `${constants.tiktok.secretpath4}${x.get('aweme_id')}&${Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)}`
+	} else if (x.get('video_id')) {
+		var url = `${constants.tiktok.secretpath5}${x.get('video_id')}`
 	} else { // it's a video
 		//var url = `${constants.tiktok.secretpath2}${key}/`
 		var url = `${domain}${key}`
@@ -71,9 +73,10 @@ function choose(choices) {
 	return choices[index];
 }
 
-function proxyThumbOrVid(url, width, video_id) {
+function proxyThumbOrVid(url, width, aweme_id, video_id) {
 	const params = new URLSearchParams()
 	if (width) params.set("width", width) // this is a video thumb
+	if (aweme_id) params.set("aweme_id", aweme_id)
 	if (video_id) params.set("video_id", video_id)
 	params.set("url", url)
 	return "/generalproxy?" + params.toString()

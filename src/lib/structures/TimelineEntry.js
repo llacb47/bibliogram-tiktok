@@ -244,33 +244,33 @@ class TimelineEntry extends TimelineBaseMethods {
 				return clone
 			}
 			// The owner may be in the user cache, so copy from that.
-			/******** 
 
-else if (collectors.userRequestCache.getByID(this.data.owner.id)) {
-	/** @type {import("./User")} *//*
-																													const user = collectors.userRequestCache.getByID(this.data.owner.id)
-																													if (user.data.full_name !== undefined) {
-																														this.data.owner = {
-																															id: user.data.id,
-																															username: user.data.username,
-																															is_verified: user.data.is_verified,
-																															full_name: user.data.full_name,
-																															profile_pic_url: user.data.profile_pic_url // _hd is also available here.
-																														}
-																														const clone = proxyExtendedOwner(this.data.owner)
-																														this.ownerPfpCacheP = clone.profile_pic_url
-																														return clone
-																													}
-																													// That didn't work, so just fall through...
-																												}
-																												/**
-																												// We'll have to re-request ourselves.
-																												fromCache = false
-																												await this.update()
-																												const clone = proxyExtendedOwner(this.data.owner)
-																												this.ownerPfpCacheP = clone.profile_pic_url
-																												return clone
-																												*/
+
+			else if (false) {
+				/** @type {import("./User")} */
+				const user = collectors.userRequestCache.getByID(this.data.owner.id)
+				if (user.data.full_name !== undefined) {
+					this.data.owner = {
+						id: user.data.id,
+						username: user.data.username,
+						is_verified: user.data.is_verified,
+						full_name: user.data.full_name,
+						profile_pic_url: user.data.profile_pic_url // _hd is also available here.
+					}
+					const clone = proxyExtendedOwner(this.data.owner)
+					this.ownerPfpCacheP = clone.profile_pic_url
+					return clone
+				}
+				// That didn't work, so just fall through...
+			}
+			/**
+			// We'll have to re-request ourselves.
+			fromCache = false
+			await this.update()
+			const clone = proxyExtendedOwner(this.data.owner)
+			this.ownerPfpCacheP = clone.profile_pic_url
+			return clone
+			**/
 		})()
 		return { owner: clone, fromCache }
 	}

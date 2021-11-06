@@ -22,7 +22,7 @@ const pinski = new Pinski({
 		seconds: 604800
 	},
 	globalHeaders: {
-		"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'; block-all-mixed-content",
+		"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; block-all-mixed-content",
 		"Feature-Policy": deniedFeatures.map(feature => `${feature} 'none'`).join("; "),
 		"Referrer-Policy": "strict-origin",
 		"X-Content-Type-Options": "nosniff"

@@ -33,7 +33,8 @@ class TimelineBaseMethods {
 		let url = this.data.video.play_addr.url_list[0]
 		let key = url.split('?')[0].substr(url.indexOf('/tos-'))
 		if (constants.proxy_media.video) url = proxyThumbOrVid(key)
-		return proxyThumbOrVid(unescape(key))
+		// todo: protect/encrypt video id somehow
+		return proxyThumbOrVid(unescape(key), null, null, this.data.video.play_addr.uri)
 	}
 
 	getAlt() {
