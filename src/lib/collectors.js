@@ -452,7 +452,7 @@ function fetchTimelinePage(userID, after) {
 		return backOff(() => switcher.request("tiktok_user_videos", `${constants.tiktok._API_PREFIX_ALT}v1/aweme/post/?${getParamsForVideoList(userID, after).toString()}`, { 'userAgent': 'com.ss.android.ugc.trill/291 (Linux; U; Android 10; en_US; Pixel 4; Build/QQ3A.200805.001; Cronet/58.0.2991.0)', 'cookie': 'odin_tt=a' }, async res => {
 
 		}).then(resp => resp.json()).then(root => {
-			console.log("typeof paging json is " + typeof root)
+			//console.log("typeof paging json is " + typeof root)
 			if (typeof root == "string") {
 				console.log("Tiktok returned a 0-byte response while paging")
 				return Promise.reject("Tiktok returned a 0-byte response");
@@ -460,7 +460,7 @@ function fetchTimelinePage(userID, after) {
 			const timeline = root.aweme_list || null
 			const cursor = root.max_cursor
 			const shouldStopPaging = (root.aweme_list == null)
-			console.log("should stop paging is " + shouldStopPaging)
+			//console.log("should stop paging is " + shouldStopPaging)
 			history.report("timeline", true)
 			return [timeline, cursor, shouldStopPaging]
 		}).catch(error => {

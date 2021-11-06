@@ -165,7 +165,7 @@ class TimelineEntry extends TimelineBaseMethods {
 	 * @param {number} size
 	 * @return {import("../types").DisplayResource}
 	 */
-	getSuggestedThumbnailP(size) {
+	getSuggestedThumbnailP(opts = {}) {
 		// this.data.video.cover.url_list[0]
 		/*
 		if (this.data.thumbnail_resources) {
@@ -196,8 +196,8 @@ class TimelineEntry extends TimelineBaseMethods {
 		//let src = this.data.video.cover.url_list[0]
 		// musicallys dont have animated_cover
 		// TODO: add setting for user wants animated cover
-		//let key = (typeof this.data.video.animated_cover !== "undefined") ? this.data.video.animated_cover.uri : this.data.video.cover.uri
-		let key = 'bigchungus'
+		let key = (typeof this.data.video.animated_cover !== "undefined" && opts.animated) ? this.data.video.animated_cover.uri : this.data.video.cover.uri
+		//let key = 'bigchungus'
 		if (constants.proxy_media.thumbnail) {
 			var src = proxyThumbOrVid(key, this.data.video.cover.width, this.data.aweme_id)
 		}// force resize to config rather than requested

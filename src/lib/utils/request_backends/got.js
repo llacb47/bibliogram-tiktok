@@ -27,7 +27,8 @@ class Got {
 	response() {
 		return this.send().instance.then(res => ({
 			status: res.statusCode,
-			headers: new Map(Object.entries(res.headers))
+			headers: new Map(Object.entries(res.headers)),
+			//bodyaaa: res.body
 		}))
 	}
 

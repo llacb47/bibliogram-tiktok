@@ -37,6 +37,7 @@ function verifyURL(completeURL) {
  */
 // TODO: change param names to reflect that we are passing the toskey not the url
 function rewriteURLSecretProxy(toskeyURL) {
+	/** 
 	let isOldBucket = false;
 	const x = new URL(toskeyURL).searchParams
 	let key = unescape(x.get('url'))
@@ -56,7 +57,7 @@ function rewriteURLSecretProxy(toskeyURL) {
 		/* for animated thumbs
 		var url = `${domain}${key}`
 		isOldBucket && (url += '/')
-		*/
+		/*
 		var url = `${constants.tiktok.secretpath4}${x.get('aweme_id')}&${Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5)}`
 	} else if (x.get('video_id')) {
 		var url = `${constants.tiktok.secretpath5}${x.get('video_id')}`
@@ -65,6 +66,37 @@ function rewriteURLSecretProxy(toskeyURL) {
 		var url = `${domain}${key}`
 		isOldBucket && (url += '/')
 	}
+	**/
+
+	const x = new URL(toskeyURL).searchParams
+	let key = x.get('url') || ''
+	if (key.charAt(0) == '/') key = key.substr(1);
+	if (key.charAt(key.length - 1) == '/') key = key.substr(0, key.length - 1);
+	//console.log(key)
+	let prefix = choose(constants.tiktok.secretpaths2) + 'origin/'
+	let fallbackToOldBucketBecauseOldBucket = false;
+	if (!key.includes('68-tx') && !x.get('userID') && !x.get('video_id')) {
+		if (key.includes('-tx') && !key.includes('-pve-')) {
+			return; // tiktok can you make your cdns any less crappy thanks
+		}
+		prefix = constants.tiktok.secretpath2
+		fallbackToOldBucketBecauseOldBucket = !fallbackToOldBucketBecauseOldBucket
+	}
+
+	if (x.get('userID')) { // pfp
+		var url = `${prefix}${key}.awebp`
+	} else if (x.get('video_id')) {
+		var url = Buffer.from(x.get('video_id'), 'base64').toString('ascii')
+	} else {
+		var url = `${prefix}${key}`
+		if (fallbackToOldBucketBecauseOldBucket) {
+			url += '/'
+		} else if (x.get('width')) {
+			url += '.awebp'
+		}
+		//fallbackToOldBucketBecauseOldBucket && ()
+	}
+
 	return { status: "ok", url }
 }
 
@@ -78,7 +110,7 @@ function proxyThumbOrVid(url, width, aweme_id, video_id) {
 	if (width) params.set("width", width) // this is a video thumb
 	if (aweme_id) params.set("aweme_id", aweme_id)
 	if (video_id) params.set("video_id", video_id)
-	params.set("url", url)
+	!video_id && params.set("url", url)
 	return "/generalproxy?" + params.toString()
 }
 

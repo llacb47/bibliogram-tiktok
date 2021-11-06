@@ -10,7 +10,7 @@ mixin timeline_page(page, pageIndex)
 		.timeline-inner(class=`${settings.timeline_columns}-columns`)
 			- const suggestedSize = 260 //- from css :(
 			each image in page
-				- const thumbnail = image.getSuggestedThumbnailP(suggestedSize) //- use this as the src in case there are problems with srcset
+				- const thumbnail = image.getSuggestedThumbnailP({'animated': true}) //- use this as the src in case there are problems with srcset
 				a(href=`/p/${image.data.aweme_id}` data-shortcode=image.data.aweme_id).sized-link
 					li().timeline-item
 						div(style={'background-image': `url("${thumbnail.src}")`}).sized-image-div
