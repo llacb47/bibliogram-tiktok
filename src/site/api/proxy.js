@@ -44,7 +44,7 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
 		const headersToReturn = {}
-		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", "accept-ranges", "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
+		for (const key of ["content-type", "date", "last-modified", "expires", "cache-control", /*"accept-ranges",*/ "content-range", "origin", "etag", "content-length", "transfer-encoding"]) {
 			headersToReturn[key] = response.headers.get(key)
 		}
 		//let headerIterator = response.headers.entries()
@@ -62,7 +62,9 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 		}
 
 		headersToReturn["cache-control"] = constants.caching.image_cache_control
-		headersToReturn["accept-ranges"] = "bytes";
+		if (!url.includes('zz')) {
+			headersToReturn["accept-ranges"] = "bytes";
+		}
 		// TODO: implement chunking/partial content serving 
 		// without this: chrome users cant seek thru the video
 
