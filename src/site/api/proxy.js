@@ -21,7 +21,6 @@ function requestWasRateLimited(status) {
  */
 async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null) {
 	// console.log(`Asked to proxy ${url}\n`, suggestedHeaders)
-	//console.trace()
 	const headersToSend = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/96.0' }
 	//console.log(suggestedHeaders)
 	if ("range" in suggestedHeaders && !url.includes('-maliva.')) {
@@ -35,27 +34,12 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 	}
 	let sent, stream, response;
 	sent = request(url, { headers: headersToSend, followRedirect: true }, { log: false })
-
-	response = await sent.response();
-	//response = stream.on('response', async res => {
-	//	//console.log(res.headers)
-	//	return res
-	//});
-	// @ts-ignore
-	//console.log(response)
-	//body = response.bodyaaa
-	//console.log("here")
-
-	//response = await sent.response()
+	response = await sent.response()
 	if (requestWasRateLimited(response.status)) {
-		console.log("UGH ... A 429")
+		// console.log("UGH ... A 429")
 		throw new Error("Request failed... 429 status code")
 	}
-
-	//console.log("here2")
-
-	stream = await sent.stream();
-
+	stream = await sent.stream()
 	//let outerurl = url;
 	// console.log(response.status, response.headers)
 	if (statusCodeIsAcceptable(response.status)) {
@@ -67,10 +51,6 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 		//for (let i = 0; i < response.headers.size; i++) {
 		//	console.log("header " + i + " is " + headerIterator.next().value);
 		//}
-
-		if (url.endsWith('.awebp')) { // don't expose content-length on thumbnails
-			headersToReturn["content-length"] = ""
-		}
 		headersToReturn["x-upstream-cache-status"] = response.headers.get("x-bdcdn-cache-status")
 		headersToReturn["x-upstream-cdn-cache"] = response.headers.get("x-cache")
 		headersToReturn["x-upstream-fastly-served-by"] = response.headers.get("x-served-by")
@@ -85,9 +65,6 @@ async function proxyResource(url, suggestedHeaders = {}, refreshCallback = null)
 		headersToReturn["accept-ranges"] = "bytes";
 		// TODO: implement chunking/partial content serving 
 		// without this: chrome users cant seek thru the video
-		//console.log(response)
-
-		//console.log(headersToReturn)
 
 		return {
 			statusCode: response.status,
@@ -218,11 +195,8 @@ return proxyResource(url.toString(), input.req.headers)
 			//
 			//}
 			const rewriteResult = rewriteURLSecretProxy(input.url)
-			//console.log(rewriteResult.url.toString())
 			// console.log(rewriteResult.url + "rw result")
-			//return await backOff(() => proxyResource(rewriteResult.url.toString(), input.req.headers), { jitter: 'full', retry: (e) => { console.log(e); return true; } })
-			try { proxyResource(rewriteResult.url.toString(), input.req.headers) } catch (e) { console.log(e) }
-			//return proxyResource(rewriteResult.url.toString(), input.req.headers)
+			return await backOff(() => proxyResource(rewriteResult.url.toString(), input.req.headers), { jitter: 'full' })
 			//try {
 			//	return proxyResource(rewriteResult.url.toString(), input.req.headers)
 			//} catch (e) {
