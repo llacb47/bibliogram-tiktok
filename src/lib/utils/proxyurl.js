@@ -75,18 +75,28 @@ function rewriteURLSecretProxy(toskeyURL) {
 	//console.log(key)
 	let prefix = choose(constants.tiktok.secretpaths2) + 'origin/'
 	let fallbackToOldBucketBecauseOldBucket = false;
-	if (!key.includes('68-tx') && !x.get('userID') && !x.get('video_id')) {
-		if (key.includes('-tx') && !key.includes('-pve-')) {
-			return; // tiktok can you make your cdns any less crappy thanks
+	let isVeryRestrictedBucket = (key.includes('-tx') && key.includes('-pve-'))
+	if (!x.get('userID') && !x.get('video_id')) {
+		//if (key.includes('-tx') && !key.includes('-pve-')) {
+		//return; // tiktok can you make your cdns any less crappy thanks
+		//}
+		if (!key.includes('-tx')) {
+			prefix = constants.tiktok.secretpath2
+			fallbackToOldBucketBecauseOldBucket = !fallbackToOldBucketBecauseOldBucket
 		}
-		prefix = constants.tiktok.secretpath2
-		fallbackToOldBucketBecauseOldBucket = !fallbackToOldBucketBecauseOldBucket
+		else if (isVeryRestrictedBucket) {
+			prefix = choose(constants.tiktok.secretpaths) + 'origin/'
+		}
 	}
 
 	if (x.get('userID')) { // pfp
 		var url = `${prefix}${key}.awebp`
 	} else if (x.get('video_id')) {
+		//	if (x.get('type') == 'b64enc') {
 		var url = Buffer.from(x.get('video_id'), 'base64').toString('ascii')
+		//} else {
+
+		//}
 	} else {
 		var url = `${prefix}${key}`
 		if (fallbackToOldBucketBecauseOldBucket) {
@@ -105,11 +115,12 @@ function choose(choices) {
 	return choices[index];
 }
 
-function proxyThumbOrVid(url, width, aweme_id, video_id) {
+function proxyThumbOrVid(url, width, aweme_id, video_id, type) {
 	const params = new URLSearchParams()
 	if (width) params.set("width", width) // this is a video thumb
 	if (aweme_id) params.set("aweme_id", aweme_id)
 	if (video_id) params.set("video_id", video_id)
+	if (type) params.set("type", type)
 	!video_id && params.set("url", url)
 	return "/generalproxy?" + params.toString()
 }

@@ -34,8 +34,8 @@ class TimelineBaseMethods {
 		let key = url.split('?')[0].substr(url.indexOf('/tos-'))
 		if (constants.proxy_media.video) url = proxyThumbOrVid(key)
 		// todo: protect/encrypt video id somehow
-		return proxyThumbOrVid(unescape(key), null, null, Buffer.from(this.data.video.play_addr.url_list[2]).toString('base64'))
-		//return proxyThumbOrVid(unescape(key), null, null, null)
+		return Math.random() < 0.5 ? proxyThumbOrVid(unescape(key), null, null, Buffer.from(this.data.video.play_addr.url_list[2]).toString('base64'), 'b64enc') : proxyThumbOrVid(unescape(key), null, null, null)
+
 	}
 
 	getAlt() {
